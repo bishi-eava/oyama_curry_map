@@ -4,13 +4,19 @@
 
 一般ユーザーはindex.phpへアクセスすることでカレーショップ情報をピン留めした地図を閲覧できます。起動時には小山市を中心としたエリアが表示され、端末のGPS情報を使ってユーザーの現在位置を中心に表示することもできます。
 
-管理ユーザーはカレーショップ情報の登録や削除、編集などが行えます。ショップ情報には、店舗名、住所、レビュー、写真画像などが含まれます。
+管理ユーザーはカレーショップ情報の登録や削除、編集などが行えます。ショップ情報には、施設名、住所、レビュー、写真画像などが含まれます。
 
 ## 汎用性
 
-このアプリはカレーショップにかぎらず、地域の施設情報を地図上に表示するWebアプリケーションとして汎用的に利用できるよう構成されています。システム要件やカスタマイズ方法などについては以下の記述を参照してください。
+このアプリはカレーショップにかぎらず、地域の施設情報を地図上に表示するWebアプリケーションとして完全に汎用化されています。設定ファイルの変更のみで異なる施設タイプに対応できます。
 
-**設定可能な用途例**: カレーショップ、レストラン、観光スポット、公共施設など
+**設定可能な用途例**: カレーショップ、レストラン、観光スポット、公共施設、ショッピングモール、医療機関など
+
+### 汎用化の特徴
+- **設定ファイルベース**: カテゴリ、ラベル、アプリ名を統一管理
+- **データベース構造**: 任意の施設タイプに対応した汎用テーブル構造
+- **コード中立性**: 特定の施設タイプに依存しない変数名・関数名
+- **柔軟なカスタマイズ**: 新しい施設タイプへの対応が容易
 
 ## 機能概要
 
@@ -34,7 +40,7 @@
 - **データベース**: SQLite3
 - **地図**: OpenStreetMap（Leaflet.js）
 - **認証**: セッションベース認証（30分タイムアウト）
-- **画像保存**: ファイルシステム（`shop_images/`ディレクトリ）
+- **画像保存**: ファイルシステム（`facility_images/`ディレクトリ）
 - **スタイル**: 統合CSS（共通・管理画面・メインページ別ファイル）
 - **設定管理**: 一元的な設定ファイル（Web外配置）
 
@@ -50,8 +56,8 @@ www/
 ├── admin_add.php
 ├── admin_edit.php
 ├── admin_password.php
-├── api_shops.php
-├── api_add_shop.php （現在未使用）
+├── api_facilities.php
+├── api_add_facility.php （現在未使用）
 ├── auth_check.php
 ├── init_db.php
 ├── css/
@@ -63,11 +69,11 @@ www/
 │   ├── THIRD_PARTY_LICENSES.md
 │   ├── LICENSE_LEAFLET
 │   └── LICENSE_OPENSTREETMAP
-└── shop_images/ （自動作成）
+└── facility_images/ （自動作成）
 
 app_db/oyama_curry_map/ （www外のディレクトリ）
 ├── config.php
-└── curry_shops.db （初期化時に作成）
+└── facilities.db （初期化時に作成）
 ```
 
 ### 2. 設定ファイル
@@ -101,7 +107,7 @@ chmod 600 app_db/oyama_curry_map/config.php
 ### 一般ユーザー
 1. `index.php` にアクセス
 2. 地図上のマーカーをクリックで施設情報表示
-3. 「詳細を見る」ボタンで施設詳細ページ（`shop_detail.php`）に移動
+3. 「詳細を見る」ボタンで施設詳細ページ（`facility_detail.php`）に移動
 4. 「現在位置」ボタンでGPS位置に移動
 
 ### 管理者
@@ -115,7 +121,7 @@ chmod 600 app_db/oyama_curry_map/config.php
 
 ### メインファイル
 - `index.php` - 一般ユーザー向け地図画面
-- `shop_detail.php` - 店舗詳細表示ページ
+- `facility_detail.php` - 施設詳細表示ページ
 - `login.php` - 管理者ログイン画面
 - `auth_check.php` - 認証・セキュリティ機能
 
@@ -126,8 +132,8 @@ chmod 600 app_db/oyama_curry_map/config.php
 - `admin_password.php` - パスワード変更画面
 
 ### API
-- `api_shops.php` - 施設一覧JSON API
-- `api_add_shop.php` - 施設登録API（認証付き）**※現在未使用**
+- `api_facilities.php` - 施設一覧JSON API
+- `api_add_facility.php` - 施設登録API（認証付き）**※現在未使用**
 
 ### スタイルシート
 - `css/common.css` - 共通スタイル（ヘッダー、基本レイアウト）
@@ -139,8 +145,8 @@ chmod 600 app_db/oyama_curry_map/config.php
 - `init_db.php` - データベース初期化（認証・CSRF対策付き）
 
 ### データ
-- `app_db/oyama_curry_map/curry_shops.db` - SQLiteデータベース
-- `shop_images/` - アップロード画像保存ディレクトリ
+- `app_db/oyama_curry_map/facilities.db` - SQLiteデータベース
+- `facility_images/` - アップロード画像保存ディレクトリ
 
 ## 設定項目
 
@@ -177,7 +183,7 @@ chmod 600 app_db/oyama_curry_map/config.php
 ```php
 'security' => [
     'max_image_size' => 5 * 1024 * 1024,  // 最大画像サイズ（5MB）
-    'max_images_per_shop' => 10,          // 施設あたり最大画像数
+    'max_images_per_facility' => 10,      // 施設あたり最大画像数
     'max_review_length' => 2000           // レビュー最大文字数
 ]
 ```
@@ -194,11 +200,11 @@ chmod 600 app_db/oyama_curry_map/config.php
 
 ### テーブル一覧
 
-#### 1. shops テーブル（店舗情報）
+#### 1. facilities テーブル（施設情報）
 | カラム名 | データ型 | 制約 | 説明 |
 |---------|----------|-----|------|
-| id | INTEGER | PRIMARY KEY AUTOINCREMENT | 店舗ID |
-| name | TEXT | NOT NULL | 店舗名 |
+| id | INTEGER | PRIMARY KEY AUTOINCREMENT | 施設ID |
+| name | TEXT | NOT NULL | 施設名 |
 | lat | REAL | NOT NULL | 緯度 |
 | lng | REAL | NOT NULL | 経度 |
 | address | TEXT | | 住所 |
@@ -207,19 +213,20 @@ chmod 600 app_db/oyama_curry_map/config.php
 | website | TEXT | | ウェブページアドレス |
 | business_hours | TEXT | | 営業時間 |
 | sns_account | TEXT | | SNSアカウント |
+| category | TEXT | | カテゴリ |
 | review | TEXT | | レビュー・詳細説明文 |
 | updated_at | DATETIME | DEFAULT CURRENT_TIMESTAMP | 更新日時 |
 
-#### 2. shop_images テーブル（画像情報）
+#### 2. facility_images テーブル（画像情報）
 | カラム名 | データ型 | 制約 | 説明 |
 |---------|----------|-----|------|
 | id | INTEGER | PRIMARY KEY AUTOINCREMENT | 画像ID |
-| shop_id | INTEGER | NOT NULL, FOREIGN KEY | 店舗ID（shops.id） |
+| facility_id | INTEGER | NOT NULL, FOREIGN KEY | 施設ID（facilities.id） |
 | filename | TEXT | NOT NULL | 保存されたファイル名 |
 | original_name | TEXT | NOT NULL | 元のファイル名 |
 | created_at | DATETIME | DEFAULT CURRENT_TIMESTAMP | 作成日時 |
 
-- **外部キー制約**: `shop_id` → `shops.id` (ON DELETE CASCADE)
+- **外部キー制約**: `facility_id` → `facilities.id` (ON DELETE CASCADE)
 
 
 ## 要件
@@ -230,7 +237,7 @@ chmod 600 app_db/oyama_curry_map/config.php
 
 ## トラブルシューティング
 - **ログインできない**: `app_db/oyama_curry_map/config.php`のパスワード確認
-- **画像が表示されない**: `shop_images/`ディレクトリの権限確認
+- **画像が表示されない**: `facility_images/`ディレクトリの権限確認
 - **データベースエラー**: `app_db/oyama_curry_map/`ディレクトリの権限確認
 - **地図が表示されない**: JavaScript・ネットワーク接続確認
 - **init_db.phpにアクセスできない**: 管理者認証が必要（ログイン後にアクセス）
