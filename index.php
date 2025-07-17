@@ -18,7 +18,7 @@ $appName = $config['app']['name'];
     <div class="header">
         <h1><?= htmlspecialchars($appName) ?></h1>
         <div>
-            <button id="filterBtn">カテゴリー選択</button>
+            <button id="filterBtn"><?= htmlspecialchars($config['app']['field_labels']['category']) ?>選択</button>
             <button id="locateBtn">現在位置に移動</button>
         </div>
     </div>
@@ -28,11 +28,15 @@ $appName = $config['app']['name'];
         <div id="categoryFilter">
             <div class="filter-content">
                 <div class="filter-options">
-                    <label><input type="checkbox" value="インドカレー" checked> <span class="category-color" style="background:#1e88e5;"></span> インドカレー</label>
-                    <label><input type="checkbox" value="タイカレー" checked> <span class="category-color" style="background:#43a047;"></span> タイカレー</label>
-                    <label><input type="checkbox" value="日本式カレー" checked> <span class="category-color" style="background:#fdd835;"></span> 日本式カレー</label>
-                    <label><input type="checkbox" value="欧風カレー" checked> <span class="category-color" style="background:#8d6e63;"></span> 欧風カレー</label>
-                    <label><input type="checkbox" value="その他" checked> <span class="category-color" style="background:#e53935;"></span> その他</label>
+                    <?php
+                    $categoryColors = [
+                        '#1e88e5', '#43a047', '#fdd835', '#8d6e63', '#e53935'
+                    ];
+                    foreach ($config['app']['categories'] as $index => $category):
+                        $color = $categoryColors[$index % count($categoryColors)];
+                    ?>
+                        <label><input type="checkbox" value="<?= htmlspecialchars($category) ?>" checked> <span class="category-color" style="background:<?= $color ?>;"></span> <?= htmlspecialchars($category) ?></label>
+                    <?php endforeach; ?>
                 </div>
                 <div class="filter-actions">
                     <button id="selectAllBtn">全選択</button>
@@ -94,17 +98,11 @@ $appName = $config['app']['name'];
     let markersLayer = L.layerGroup();
     
     // カテゴリーごとのマーカー色を定義
-    const categoryColors = {
-      'インドカレー': '#1e88e5',  // 青
-      'タイカレー': '#43a047',    // 緑
-      '日本式カレー': '#fdd835',  // 黄
-      '欧風カレー': '#8d6e63',    // 茶
-      'その他': '#e53935'         // 赤
-    };
+    const categoryColors = <?= json_encode(array_combine($config['app']['categories'], ['#1e88e5', '#43a047', '#fdd835', '#8d6e63', '#e53935'])) ?>;
     
     // カテゴリーに応じたマーカーアイコンを取得する関数
     function getMarkerIcon(category) {
-      const color = categoryColors[category] || categoryColors['その他'];
+      const color = categoryColors[category] || '<?= end($config['app']['categories']) === 'その他' ? '#e53935' : '#666666' ?>';
       
       // SVGでカスタムマーカーを作成
       const svgIcon = `
@@ -144,7 +142,7 @@ $appName = $config['app']['name'];
             
             // カテゴリーがあれば表示
             if (shop.category && shop.category.trim() !== '') {
-              const categoryColor = categoryColors[shop.category] || categoryColors['その他'];
+              const categoryColor = categoryColors[shop.category] || '<?= end($config['app']['categories']) === 'その他' ? '#e53935' : '#666666' ?>';
               popupContent += `<br><span style="background:${categoryColor}; color:#fff; padding:0.2em 0.5em; border-radius:3px; font-size:0.8em;">${shop.category}</span>`;
             }
             
@@ -213,8 +211,9 @@ $appName = $config['app']['name'];
             }
             
             // 詳細を見るボタンを追加
+            const facilityName = <?= json_encode($config['app']['facility_name']) ?>;
             popupContent += `<br><div style="margin-top:1em; text-align:center;">
-              <a href="shop_detail.php?id=${shop.id}" style="display:inline-block; padding:0.5em 1em; background:#f8b500; color:#fff; text-decoration:none; border-radius:4px; font-size:0.9em;">詳細を見る</a>
+              <a href="shop_detail.php?id=${shop.id}" style="display:inline-block; padding:0.5em 1em; background:#f8b500; color:#fff; text-decoration:none; border-radius:4px; font-size:0.9em;">${facilityName}詳細を見る</a>
             </div>`;
             
             // カテゴリーに応じたマーカーアイコンを取得
@@ -284,9 +283,10 @@ $appName = $config['app']['name'];
       });
       
       // 選択されたカテゴリーの店舗のみをフィルター
+      const lastCategory = <?= json_encode(end($config['app']['categories'])) ?>;
       const filteredShops = allShops.filter(shop => {
         return selectedCategories.includes(shop.category) || 
-               (!shop.category && selectedCategories.includes('その他'));
+               (!shop.category && selectedCategories.includes(lastCategory));
       });
       
       // フィルターされた店舗を表示

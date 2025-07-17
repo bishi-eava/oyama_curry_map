@@ -88,6 +88,19 @@ return [
             '欧風カレー',
             '日本式カレー',
             'その他'
+        ],
+        'field_labels' => [
+            'name' => '店舗名',
+            'category' => 'カテゴリー',
+            'address' => '住所',
+            'description' => '説明',
+            'phone' => '電話番号',
+            'website' => 'ウェブサイト',
+            'business_hours' => '営業時間',
+            'sns_account' => 'SNSアカウント',
+            'review' => 'レビュー・詳細説明',
+            'images' => '画像',
+            'location' => '位置情報'
         ]
     ],
     

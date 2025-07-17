@@ -56,17 +56,17 @@ $res = $db->query('SELECT * FROM shops ORDER BY id DESC');
         <table>
             <tr>
                 <th class="col-id">ID</th>
-                <th class="col-name"><?= htmlspecialchars($config['app']['facility_name']) ?>名</th>
-                <th class="col-category">カテゴリー</th>
-                <th class="col-description">説明</th>
-                <th class="col-address">住所</th>
-                <th class="col-phone">電話番号</th>
-                <th class="col-hours">営業時間</th>
-                <th class="col-website">ウェブサイト</th>
-                <th class="col-sns">SNS</th>
-                <th class="col-review">レビュー</th>
+                <th class="col-name"><?= htmlspecialchars($config['app']['field_labels']['name']) ?></th>
+                <th class="col-category"><?= htmlspecialchars($config['app']['field_labels']['category']) ?></th>
+                <th class="col-description"><?= htmlspecialchars($config['app']['field_labels']['description']) ?></th>
+                <th class="col-address"><?= htmlspecialchars($config['app']['field_labels']['address']) ?></th>
+                <th class="col-phone"><?= htmlspecialchars($config['app']['field_labels']['phone']) ?></th>
+                <th class="col-hours"><?= htmlspecialchars($config['app']['field_labels']['business_hours']) ?></th>
+                <th class="col-website"><?= htmlspecialchars($config['app']['field_labels']['website']) ?></th>
+                <th class="col-sns"><?= htmlspecialchars($config['app']['field_labels']['sns_account']) ?></th>
+                <th class="col-review"><?= htmlspecialchars($config['app']['field_labels']['review']) ?></th>
                 <th class="col-updated">更新日時</th>
-                <th class="col-images">画像</th>
+                <th class="col-images"><?= htmlspecialchars($config['app']['field_labels']['images']) ?></th>
                 <th class="col-actions">操作</th>
             </tr>
         <?php while ($row = $res->fetchArray(SQLITE3_ASSOC)): ?>

@@ -76,7 +76,7 @@ if ($result) {
         // 最大10枚チェック
         if ($fileCount > 10) {
             http_response_code(400);
-            echo json_encode(['error' => '画像は最大10枚まで登録可能です']);
+            echo json_encode(['error' => "{$config['app']['field_labels']['images']}は最大10枚まで登録可能です"]);
             exit;
         }
         
@@ -90,7 +90,7 @@ if ($result) {
                 // ファイルサイズチェック（5MB）
                 if ($fileSize > 5 * 1024 * 1024) {
                     http_response_code(400);
-                    echo json_encode(['error' => "画像 {$fileName} のサイズが5MBを超えています"]);
+                    echo json_encode(['error' => "{$config['app']['field_labels']['images']} {$fileName} のサイズが5MBを超えています"]);
                     exit;
                 }
                 
@@ -98,7 +98,7 @@ if ($result) {
                 $imageInfo = getimagesize($fileTmpName);
                 if ($imageInfo === false) {
                     http_response_code(400);
-                    echo json_encode(['error' => "画像 {$fileName} は有効な画像ファイルではありません"]);
+                    echo json_encode(['error' => "{$config['app']['field_labels']['images']} {$fileName} は有効な{$config['app']['field_labels']['images']}ファイルではありません"]);
                     exit;
                 }
                 

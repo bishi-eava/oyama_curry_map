@@ -64,10 +64,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['name'])) {
         
         // 説明の文字数チェック
         if (mb_strlen($description) > 2000) {
-            $message = '説明は2000文字以内で入力してください';
+            $message = "{$config['app']['field_labels']['description']}は2000文字以内で入力してください";
             $messageType = 'error';
         } elseif (mb_strlen($review) > 2000) {
-            $message = 'レビューは2000文字以内で入力してください';
+            $message = "{$config['app']['field_labels']['review']}は2000文字以内で入力してください";
             $messageType = 'error';
         } else {
         
@@ -144,7 +144,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['name'])) {
                                 }
                             }
                         } else {
-                            $message = '画像は合計で最大10枚まで登録可能です';
+                            $message = "{$config['app']['field_labels']['images']}は合計で最大10枚まで登録可能です";
                             $messageType = 'error';
                         }
                     }
@@ -210,7 +210,7 @@ if (isset($_GET['delete_image'])) {
             $images[] = $row;
         }
         
-        $message = '画像を削除しました';
+        $message = "{$config['app']['field_labels']['images']}を削除しました";
         $messageType = 'success';
     }
 }
@@ -255,7 +255,7 @@ if (isset($_GET['delete_image'])) {
                 </div>
                 
                 <div class="form-group">
-                    <label for="category">カテゴリー *</label>
+                    <label for="category"><?= htmlspecialchars($config['app']['field_labels']['category']) ?> *</label>
                     <select id="category" name="category" required>
                         <option value="">カテゴリーを選択してください</option>
                         <?php foreach ($config['app']['categories'] as $category): ?>
@@ -265,13 +265,13 @@ if (isset($_GET['delete_image'])) {
                 </div>
                 
                 <div class="form-group">
-                    <label for="address">住所</label>
+                    <label for="address"><?= htmlspecialchars($config['app']['field_labels']['address']) ?></label>
                     <input type="text" id="address" name="address" value="<?= htmlspecialchars($shop['address']) ?>">
                     <button type="button" id="getAddressBtn" style="margin-top:0.5em; padding:0.5em 1em; font-size:0.9em;">マーカー位置の住所を取得</button>
                 </div>
                 
                 <div class="form-group">
-                    <label for="description">説明（最大2000文字）</label>
+                    <label for="description"><?= htmlspecialchars($config['app']['field_labels']['description']) ?>（最大2000文字）</label>
                     <textarea id="description" name="description" rows="3" maxlength="2000" placeholder="施設の簡単な説明を入力してください"><?= htmlspecialchars($shop['description'] ?? '') ?></textarea>
                     <div style="font-size:0.8em; color:#666; text-align:right; margin-top:0.3em;">
                         <span id="descriptionCount">0</span>/2000文字
@@ -279,27 +279,27 @@ if (isset($_GET['delete_image'])) {
                 </div>
                 
                 <div class="form-group">
-                    <label for="phone">電話番号</label>
+                    <label for="phone"><?= htmlspecialchars($config['app']['field_labels']['phone']) ?></label>
                     <input type="tel" id="phone" name="phone" value="<?= htmlspecialchars($shop['phone'] ?? '') ?>" placeholder="03-1234-5678">
                 </div>
                 
                 <div class="form-group">
-                    <label for="website">ウェブページアドレス</label>
+                    <label for="website"><?= htmlspecialchars($config['app']['field_labels']['website']) ?></label>
                     <input type="url" id="website" name="website" value="<?= htmlspecialchars($shop['website'] ?? '') ?>" placeholder="https://example.com">
                 </div>
                 
                 <div class="form-group">
-                    <label for="business_hours">営業時間</label>
+                    <label for="business_hours"><?= htmlspecialchars($config['app']['field_labels']['business_hours']) ?></label>
                     <input type="text" id="business_hours" name="business_hours" value="<?= htmlspecialchars($shop['business_hours'] ?? '') ?>" placeholder="11:00-21:00">
                 </div>
                 
                 <div class="form-group">
-                    <label for="sns_account">SNSアカウント</label>
+                    <label for="sns_account"><?= htmlspecialchars($config['app']['field_labels']['sns_account']) ?></label>
                     <input type="text" id="sns_account" name="sns_account" value="<?= htmlspecialchars($shop['sns_account'] ?? '') ?>" placeholder="@example_account">
                 </div>
                 
                 <div class="form-group">
-                    <label for="review">レビュー・詳細説明（最大2000文字）</label>
+                    <label for="review"><?= htmlspecialchars($config['app']['field_labels']['review']) ?>（最大2000文字）</label>
                     <textarea id="review" name="review" rows="5" maxlength="2000" placeholder="<?= htmlspecialchars($config['app']['facility_name']) ?>の特徴、雰囲気、おすすめメニューなどを詳しく記入してください..."><?= htmlspecialchars($shop['review'] ?? '') ?></textarea>
                     <div style="font-size:0.8em; color:#666; text-align:right; margin-top:0.3em;">
                         <span id="reviewCount">0</span>/2000文字
@@ -307,10 +307,10 @@ if (isset($_GET['delete_image'])) {
                 </div>
                 
                 <div class="form-group">
-                    <label>既存の画像</label>
+                    <label>既存の<?= htmlspecialchars($config['app']['field_labels']['images']) ?></label>
                     <div class="existing-images">
                         <?php if (empty($images)): ?>
-                            <p style="color:#999;">画像がありません</p>
+                            <p style="color:#999;"><?= htmlspecialchars($config['app']['field_labels']['images']) ?>がありません</p>
                         <?php else: ?>
                             <?php foreach ($images as $image): ?>
                                 <div class="image-item">
@@ -325,7 +325,7 @@ if (isset($_GET['delete_image'])) {
                 </div>
                 
                 <div class="form-group">
-                    <label for="new_images">新しい画像を追加（現在<?= count($images) ?>枚、最大10枚まで）</label>
+                    <label for="new_images">新しい<?= htmlspecialchars($config['app']['field_labels']['images']) ?>を追加（現在<?= count($images) ?>枚、最大10枚まで）</label>
                     <input type="file" id="new_images" name="new_images[]" multiple accept="image/*">
                     <div id="newImagePreview"></div>
                 </div>
@@ -405,7 +405,7 @@ if (isset($_GET['delete_image'])) {
         
         // 画像削除
         function deleteImage(imageId) {
-            if (confirm('この画像を削除しますか？')) {
+            if (confirm('この' + <?= json_encode($config['app']['field_labels']['images']) ?> + 'を削除しますか？')) {
                 location.href = '?id=<?= $shopId ?>&delete_image=' + imageId;
             }
         }
@@ -418,7 +418,7 @@ if (isset($_GET['delete_image'])) {
             
             const currentImageCount = <?= count($images) ?>;
             if ((currentImageCount + files.length) > 10) {
-                alert('画像は合計で最大10枚まで選択可能です');
+                alert(<?= json_encode($config['app']['field_labels']['images']) ?> + 'は合計で最大10枚まで選択可能です');
                 e.target.value = '';
                 return;
             }

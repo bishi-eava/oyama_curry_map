@@ -34,10 +34,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['name'])) {
     
     // 説明の文字数チェック
     if (mb_strlen($description) > 2000) {
-        $message = '説明は2000文字以内で入力してください';
+        $message = "{$config['app']['field_labels']['description']}は2000文字以内で入力してください";
         $messageType = 'error';
     } elseif (mb_strlen($review) > 2000) {
-        $message = 'レビューは2000文字以内で入力してください';
+        $message = "{$config['app']['field_labels']['review']}は2000文字以内で入力してください";
         $messageType = 'error';
     } else {
     
@@ -174,7 +174,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['name'])) {
                 </div>
                 
                 <div class="form-group">
-                    <label for="category">カテゴリー *</label>
+                    <label for="category"><?= htmlspecialchars($config['app']['field_labels']['category']) ?> *</label>
                     <select id="category" name="category" required>
                         <option value="">カテゴリーを選択してください</option>
                         <?php foreach ($config['app']['categories'] as $category): ?>
@@ -184,13 +184,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['name'])) {
                 </div>
                 
                 <div class="form-group">
-                    <label for="address">住所</label>
+                    <label for="address"><?= htmlspecialchars($config['app']['field_labels']['address']) ?></label>
                     <input type="text" id="address" name="address" value="<?= htmlspecialchars($_POST['address'] ?? '') ?>">
                     <button type="button" id="getAddressBtn" style="margin-top:0.5em; padding:0.5em 1em; font-size:0.9em;">マーカー位置の住所を取得</button>
                 </div>
                 
                 <div class="form-group">
-                    <label for="description">説明（最大2000文字）</label>
+                    <label for="description"><?= htmlspecialchars($config['app']['field_labels']['description']) ?>（最大2000文字）</label>
                     <textarea id="description" name="description" rows="3" maxlength="2000" placeholder="施設の簡単な説明を入力してください"><?= htmlspecialchars($_POST['description'] ?? '') ?></textarea>
                     <div style="font-size:0.8em; color:#666; text-align:right; margin-top:0.3em;">
                         <span id="descriptionCount">0</span>/2000文字
@@ -198,27 +198,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['name'])) {
                 </div>
                 
                 <div class="form-group">
-                    <label for="phone">電話番号</label>
+                    <label for="phone"><?= htmlspecialchars($config['app']['field_labels']['phone']) ?></label>
                     <input type="tel" id="phone" name="phone" value="<?= htmlspecialchars($_POST['phone'] ?? '') ?>" placeholder="03-1234-5678">
                 </div>
                 
                 <div class="form-group">
-                    <label for="website">ウェブページアドレス</label>
+                    <label for="website"><?= htmlspecialchars($config['app']['field_labels']['website']) ?></label>
                     <input type="url" id="website" name="website" value="<?= htmlspecialchars($_POST['website'] ?? '') ?>" placeholder="https://example.com">
                 </div>
                 
                 <div class="form-group">
-                    <label for="business_hours">営業時間</label>
+                    <label for="business_hours"><?= htmlspecialchars($config['app']['field_labels']['business_hours']) ?></label>
                     <input type="text" id="business_hours" name="business_hours" value="<?= htmlspecialchars($_POST['business_hours'] ?? '') ?>" placeholder="11:00-21:00">
                 </div>
                 
                 <div class="form-group">
-                    <label for="sns_account">SNSアカウント</label>
+                    <label for="sns_account"><?= htmlspecialchars($config['app']['field_labels']['sns_account']) ?></label>
                     <input type="text" id="sns_account" name="sns_account" value="<?= htmlspecialchars($_POST['sns_account'] ?? '') ?>" placeholder="@example_account">
                 </div>
                 
                 <div class="form-group">
-                    <label for="review">レビュー・詳細説明（最大2000文字）</label>
+                    <label for="review"><?= htmlspecialchars($config['app']['field_labels']['review']) ?>（最大2000文字）</label>
                     <textarea id="review" name="review" rows="5" maxlength="2000" placeholder="<?= htmlspecialchars($config['app']['facility_name']) ?>の特徴、雰囲気、おすすめメニューなどを詳しく記入してください..."><?= htmlspecialchars($_POST['review'] ?? '') ?></textarea>
                     <div style="font-size:0.8em; color:#666; text-align:right; margin-top:0.3em;">
                         <span id="reviewCount">0</span>/2000文字
@@ -226,7 +226,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['name'])) {
                 </div>
                 
                 <div class="form-group">
-                    <label for="images">画像（最大10枚、1枚あたり5MBまで）</label>
+                    <label for="images"><?= htmlspecialchars($config['app']['field_labels']['images']) ?>（最大10枚、1枚あたり5MBまで）</label>
                     <input type="file" id="images" name="images[]" multiple accept="image/*">
                     <div id="imagePreview"></div>
                 </div>
@@ -308,7 +308,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['name'])) {
             preview.innerHTML = '';
             
             if (files.length > 10) {
-                alert('画像は最大10枚まで選択可能です');
+                alert(<?= json_encode($config['app']['field_labels']['images']) ?> + 'は最大10枚まで選択可能です');
                 e.target.value = '';
                 return;
             }

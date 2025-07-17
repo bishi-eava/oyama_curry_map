@@ -6,7 +6,7 @@ $config = getConfig();
 // 店舗IDのチェック
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
     header('HTTP/1.0 404 Not Found');
-    die('店舗が見つかりません。');
+    die("{$config['app']['facility_name']}が見つかりません。");
 }
 
 $shopId = intval($_GET['id']);
@@ -20,7 +20,7 @@ $shop = $result->fetchArray(SQLITE3_ASSOC);
 
 if (!$shop) {
     header('HTTP/1.0 404 Not Found');
-    die('店舗が見つかりません。');
+    die("{$config['app']['facility_name']}が見つかりません。");
 }
 
 // 店舗の画像を取得
@@ -60,57 +60,57 @@ while ($imageRow = $imageRes->fetchArray(SQLITE3_ASSOC)) {
             <h2 class="shop-title"><?= htmlspecialchars($shop['name']) ?></h2>
             
             <div class="form-group">
-                <span class="field-label">カテゴリー</span>
+                <span class="field-label"><?= htmlspecialchars($config['app']['field_labels']['category']) ?></span>
                 <div class="readonly-field <?= empty(trim($shop['category'])) ? 'empty' : '' ?>">
-                    <?= !empty(trim($shop['category'])) ? htmlspecialchars($shop['category']) : 'カテゴリー情報がありません' ?>
+                    <?= !empty(trim($shop['category'])) ? htmlspecialchars($shop['category']) : htmlspecialchars($config['app']['field_labels']['category']) . '情報がありません' ?>
                 </div>
             </div>
             
             <div class="form-group">
-                <span class="field-label" style="font-weight: 700; color: #212529; font-size: 1.1em;">住所</span>
+                <span class="field-label" style="font-weight: 700; color: #212529; font-size: 1.1em;"><?= htmlspecialchars($config['app']['field_labels']['address']) ?></span>
                 <div class="readonly-field <?= empty(trim($shop['address'])) ? 'empty' : '' ?>" style="background: #f8f9fa; border: 1px solid #e9ecef; padding: 1em; border-radius: 6px; margin-bottom: 0.5em;">
-                    <?= !empty(trim($shop['address'])) ? htmlspecialchars($shop['address']) : '住所情報がありません' ?>
+                    <?= !empty(trim($shop['address'])) ? htmlspecialchars($shop['address']) : htmlspecialchars($config['app']['field_labels']['address']) . '情報がありません' ?>
                 </div>
             </div>
             
             <div class="form-group">
-                <span class="field-label">説明</span>
+                <span class="field-label"><?= htmlspecialchars($config['app']['field_labels']['description']) ?></span>
                 <div class="readonly-field <?= empty(trim($shop['description'])) ? 'empty' : '' ?>">
-                    <?= !empty(trim($shop['description'])) ? nl2br(htmlspecialchars($shop['description'])) : '説明がありません' ?>
+                    <?= !empty(trim($shop['description'])) ? nl2br(htmlspecialchars($shop['description'])) : htmlspecialchars($config['app']['field_labels']['description']) . 'がありません' ?>
                 </div>
             </div>
             
             <div class="form-group">
-                <span class="field-label">電話番号</span>
+                <span class="field-label"><?= htmlspecialchars($config['app']['field_labels']['phone']) ?></span>
                 <div class="readonly-field <?= empty(trim($shop['phone'])) ? 'empty' : '' ?>">
                     <?php if (!empty(trim($shop['phone']))): ?>
                         <a href="tel:<?= htmlspecialchars($shop['phone']) ?>"><?= htmlspecialchars($shop['phone']) ?></a>
                     <?php else: ?>
-                        電話番号がありません
+                        <?= htmlspecialchars($config['app']['field_labels']['phone']) ?>がありません
                     <?php endif; ?>
                 </div>
             </div>
             
             <div class="form-group">
-                <span class="field-label">ウェブページ</span>
+                <span class="field-label"><?= htmlspecialchars($config['app']['field_labels']['website']) ?></span>
                 <div class="readonly-field <?= empty(trim($shop['website'])) ? 'empty' : '' ?>">
                     <?php if (!empty(trim($shop['website']))): ?>
                         <a href="<?= htmlspecialchars($shop['website']) ?>" target="_blank"><?= htmlspecialchars($shop['website']) ?></a>
                     <?php else: ?>
-                        ウェブページがありません
+                        <?= htmlspecialchars($config['app']['field_labels']['website']) ?>がありません
                     <?php endif; ?>
                 </div>
             </div>
             
             <div class="form-group">
-                <span class="field-label">営業時間</span>
+                <span class="field-label"><?= htmlspecialchars($config['app']['field_labels']['business_hours']) ?></span>
                 <div class="readonly-field <?= empty(trim($shop['business_hours'])) ? 'empty' : '' ?>">
-                    <?= !empty(trim($shop['business_hours'])) ? htmlspecialchars($shop['business_hours']) : '営業時間情報がありません' ?>
+                    <?= !empty(trim($shop['business_hours'])) ? htmlspecialchars($shop['business_hours']) : htmlspecialchars($config['app']['field_labels']['business_hours']) . '情報がありません' ?>
                 </div>
             </div>
             
             <div class="form-group">
-                <span class="field-label">SNSアカウント</span>
+                <span class="field-label"><?= htmlspecialchars($config['app']['field_labels']['sns_account']) ?></span>
                 <div class="readonly-field <?= empty(trim($shop['sns_account'])) ? 'empty' : '' ?>">
                     <?php if (!empty(trim($shop['sns_account']))): ?>
                         <?php
@@ -131,14 +131,14 @@ while ($imageRow = $imageRes->fetchArray(SQLITE3_ASSOC)) {
                         }
                         ?>
                     <?php else: ?>
-                        SNSアカウントがありません
+                        <?= htmlspecialchars($config['app']['field_labels']['sns_account']) ?>がありません
                     <?php endif; ?>
                 </div>
             </div>
             
             <?php if (!empty(trim($shop['review']))): ?>
             <div class="form-group">
-                <span class="field-label">レビュー・詳細説明</span>
+                <span class="field-label"><?= htmlspecialchars($config['app']['field_labels']['review']) ?></span>
                 <div class="review-section">
                     <?= nl2br(htmlspecialchars($shop['review'])) ?>
                 </div>
@@ -147,7 +147,7 @@ while ($imageRow = $imageRes->fetchArray(SQLITE3_ASSOC)) {
             
             <?php if (!empty($images)): ?>
             <div class="form-group">
-                <span class="field-label">画像 (<?= count($images) ?>枚)</span>
+                <span class="field-label"><?= htmlspecialchars($config['app']['field_labels']['images']) ?> (<?= count($images) ?>枚)</span>
                 <div class="shop-images">
                     <?php foreach ($images as $image): ?>
                         <div class="shop-image" onclick="showImageModal('<?= htmlspecialchars($image['url']) ?>', '<?= htmlspecialchars($image['original_name']) ?>')">
