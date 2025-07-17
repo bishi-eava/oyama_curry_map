@@ -1,0 +1,374 @@
+/* 管理画面専用スタイル */
+
+/* 管理画面用グリッドレイアウト */
+.container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    height: calc(100vh - 80px);
+}
+
+.form-section {
+    padding: 1em;
+    overflow-y: auto;
+}
+
+.map-section {
+    border-left: 1px solid #ccc;
+}
+
+.map-section #map { 
+    height: 100%; 
+    width: 100%; 
+}
+
+/* フォーム要素 */
+.form-group {
+    margin-bottom: 1em;
+}
+
+label {
+    display: block;
+    margin-bottom: 0.3em;
+    font-weight: bold;
+}
+
+/* ボタン */
+.btn-secondary {
+    background: #6c757d;
+}
+
+.btn-secondary:hover {
+    background: #545b62;
+}
+
+/* メッセージ */
+.message {
+    padding: 0.8em;
+    margin-bottom: 1em;
+    border-radius: 4px;
+}
+
+.message.success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.message.error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+/* 座標情報 */
+.coord-info {
+    background: #f8f9fa;
+    padding: 0.5em;
+    border-radius: 4px;
+    font-size: 0.9em;
+    margin-bottom: 1em;
+}
+
+/* 画像プレビュー */
+#imagePreview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5em;
+    margin-top: 0.5em;
+}
+
+#imagePreview img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+/* 既存画像表示 */
+.existing-images {
+    margin-bottom: 1em;
+}
+
+.image-item {
+    display: inline-block;
+    margin: 5px;
+    position: relative;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.image-item img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    display: block;
+}
+
+.image-item .delete-btn {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background: rgba(220, 53, 69, 0.8);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    margin: 0;
+}
+
+.image-item .delete-btn:hover {
+    background: rgba(220, 53, 69, 1);
+}
+
+#newImagePreview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5em;
+    margin-top: 0.5em;
+}
+
+#newImagePreview img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+/* 管理一覧テーブル */
+table { 
+    border-collapse: collapse; 
+    width: 100%; 
+    table-layout: auto;
+}
+
+th, td { 
+    border: 1px solid #ccc; 
+    padding: 0.5em; 
+    text-align: left;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+th { 
+    background: #f8b500; 
+    color: #fff; 
+}
+
+tr:nth-child(even) { 
+    background: #f9f9f9; 
+}
+
+.del { 
+    color: red; 
+}
+
+/* テーブル列幅クラス */
+.col-id {
+    width: 60px;
+    min-width: 30px;
+    max-width: 60px;
+}
+
+.col-name {
+    width: 150px;
+    min-width: 150px;
+    max-width: 150px;
+}
+
+.col-category {
+    width: 120px;
+    min-width: 120px;
+    max-width: 120px;
+}
+
+.col-description {
+    width: 250px;
+    min-width: 250px;
+    max-width: 250px;
+}
+
+.col-address {
+    width: 200px;
+    min-width: 200px;
+    max-width: 200px;
+}
+
+.col-phone {
+    width: 150px;
+    min-width: 150px;
+    max-width: 150px;
+}
+
+.col-hours {
+    width: 120px;
+    min-width: 120px;
+    max-width: 120px;
+}
+
+.col-website {
+    width: 150px;
+    min-width: 150px;
+    max-width: 150px;
+}
+
+.col-sns {
+    width: 150px;
+    min-width: 150px;
+    max-width: 150px;
+}
+
+.col-review {
+    width: 250px;
+    min-width: 250px;
+    max-width: 250px;
+}
+
+.col-updated {
+    width: 100px;
+    min-width: 100px;
+    max-width: 100px;
+}
+
+.col-images {
+    width: 200px;
+    min-width: 200px;
+    max-width: 200px;
+}
+
+.col-actions {
+    width: 100px;
+    min-width: 100px;
+    max-width: 100px;
+}
+
+/* 中央配置コンテナ（パスワード変更用） */
+.center-container {
+    max-width: 500px;
+    margin: 2em auto;
+    background: #fff;
+    padding: 2em;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+/* ログイン専用レイアウト */
+body.login-page { 
+    background: #f5f5f5; 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    min-height: 100vh; 
+    padding: 2em;
+}
+
+.login-container {
+    background: #fff;
+    padding: 2em;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 400px;
+}
+
+.login-container h1 { 
+    background: #f8b500; 
+    color: #fff; 
+    margin: -2rem -2rem 2rem -2rem; 
+    padding: 1em 2em; 
+    font-size: 1.2em; 
+    border-radius: 8px 8px 0 0;
+}
+
+/* フルワイドボタン */
+button.full-width {
+    width: 100%;
+    padding: 0.8em;
+    margin-bottom: 0.5em;
+}
+
+/* セキュリティ情報 */
+.security-info {
+    background: #e7f3ff;
+    padding: 1em;
+    border-radius: 4px;
+    margin-bottom: 1em;
+    font-size: 0.9em;
+}
+
+.security-info h3 {
+    margin-top: 0;
+    color: #0056b3;
+}
+
+.security-info ul {
+    margin: 0;
+    padding-left: 1.5em;
+}
+
+/* エラーメッセージ（ログイン用） */
+.error {
+    color: #e74c3c;
+    margin-bottom: 1em;
+    padding: 0.5em;
+    background: #fdf2f2;
+    border: 1px solid #fbb;
+    border-radius: 4px;
+}
+
+/* 戻るリンク */
+.back-link {
+    text-align: center;
+    margin-top: 1em;
+}
+
+.back-link a {
+    color: #666;
+    text-decoration: none;
+}
+
+.back-link a:hover {
+    text-decoration: underline;
+}
+
+/* パスワード変更画面用の背景 */
+body.password-page { 
+    background: #f5f5f5; 
+}
+
+/* レスポンシブデザイン */
+@media (max-width: 768px) {
+    .container {
+        grid-template-columns: 1fr;
+        grid-template-rows: 1fr 300px;
+    }
+    
+    .map-section { 
+        border-left: none; 
+        border-top: 1px solid #ccc; 
+    }
+    
+    .center-container {
+        margin: 1em;
+        padding: 1.5em;
+    }
+    
+    .login-container {
+        margin: 1em;
+        padding: 1.5em;
+    }
+    
+    .login-container h1 {
+        margin: -1.5rem -1.5rem 1.5rem -1.5rem;
+        padding: 1em 1.5em;
+    }
+}

@@ -1,0 +1,12 @@
+# 施設画像
+shop_images/
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+.claude/
+.github/
+CLAUDE.md
