@@ -3,6 +3,7 @@
 require_once 'auth_check.php';
 
 header('Content-Type: application/json; charset=UTF-8');
+$config = getConfig();
 $db = getDatabase();
 $res = $db->query('SELECT * FROM shops');
 $shops = [];
@@ -17,7 +18,7 @@ while ($row = $res->fetchArray(SQLITE3_ASSOC)) {
         $images[] = [
             'filename' => $imageRow['filename'],
             'original_name' => $imageRow['original_name'],
-            'url' => 'shop_images/' . $imageRow['filename']
+            'url' => $config['storage']['images_dir'] . '/' . $imageRow['filename']
         ];
     }
     

@@ -33,7 +33,7 @@ while ($imageRow = $imageRes->fetchArray(SQLITE3_ASSOC)) {
     $images[] = [
         'filename' => $imageRow['filename'],
         'original_name' => $imageRow['original_name'],
-        'url' => 'shop_images/' . $imageRow['filename']
+        'url' => $config['storage']['images_dir'] . '/' . $imageRow['filename']
     ];
 }
 ?>

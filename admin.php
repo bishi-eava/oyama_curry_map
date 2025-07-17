@@ -19,7 +19,7 @@ if (isset($_GET['delete'])) {
     // 関連する画像ファイルを削除
     $imageRes = $db->query("SELECT filename FROM shop_images WHERE shop_id = $id");
     while ($imageRow = $imageRes->fetchArray(SQLITE3_ASSOC)) {
-        $filePath = __DIR__ . '/shop_images/' . $imageRow['filename'];
+        $filePath = __DIR__ . '/' . $config['storage']['images_dir'] . '/' . $imageRow['filename'];
         if (file_exists($filePath)) {
             unlink($filePath);
         }
@@ -152,7 +152,7 @@ $res = $db->query('SELECT * FROM shops ORDER BY id DESC');
                     $imageCount++;
                 ?>
                     <div style="margin:2px; display:inline-block;">
-                        <img src="shop_images/<?= htmlspecialchars($imageRow['filename']) ?>" 
+                        <img src="<?= htmlspecialchars($config['storage']['images_dir']) ?>/<?= htmlspecialchars($imageRow['filename']) ?>" 
                              style="width:50px;height:50px;object-fit:cover;border:1px solid #ccc;" 
                              title="<?= htmlspecialchars($imageRow['original_name']) ?>">
                     </div>

@@ -76,7 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['name'])) {
                 
                 // 画像ファイルの処理
                 if (isset($_FILES['images']) && $_FILES['images']['error'][0] !== UPLOAD_ERR_NO_FILE) {
-                    $uploadDir = __DIR__ . '/shop_images/';
+                    $uploadDir = __DIR__ . '/' . $config['storage']['images_dir'] . '/';
                     if (!is_dir($uploadDir)) {
                         mkdir($uploadDir, 0777, true);
                     }
@@ -177,11 +177,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['name'])) {
                     <label for="category">カテゴリー *</label>
                     <select id="category" name="category" required>
                         <option value="">カテゴリーを選択してください</option>
-                        <option value="インドカレー" <?= (($_POST['category'] ?? '') === 'インドカレー') ? 'selected' : '' ?>>インドカレー</option>
-                        <option value="タイカレー" <?= (($_POST['category'] ?? '') === 'タイカレー') ? 'selected' : '' ?>>タイカレー</option>
-                        <option value="欧風カレー" <?= (($_POST['category'] ?? '') === '欧風カレー') ? 'selected' : '' ?>>欧風カレー</option>
-                        <option value="日本式カレー" <?= (($_POST['category'] ?? '') === '日本式カレー') ? 'selected' : '' ?>>日本式カレー</option>
-                        <option value="その他" <?= (($_POST['category'] ?? '') === 'その他') ? 'selected' : '' ?>>その他</option>
+                        <?php foreach ($config['app']['categories'] as $category): ?>
+                            <option value="<?= htmlspecialchars($category) ?>" <?= (($_POST['category'] ?? '') === $category) ? 'selected' : '' ?>><?= htmlspecialchars($category) ?></option>
+                        <?php endforeach; ?>
                     </select>
                 </div>
                 

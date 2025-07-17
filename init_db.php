@@ -378,7 +378,7 @@ function resetDatabaseWithSampleData($config) {
     dropAllTables($config, $db);
     
     // 既存の画像ファイルも削除
-    $imageDir = __DIR__ . '/shop_images/';
+    $imageDir = __DIR__ . '/' . $config['storage']['images_dir'] . '/';
     if (is_dir($imageDir)) {
         $files = glob($imageDir . '*');
         foreach ($files as $file) {
@@ -398,45 +398,8 @@ function resetDatabaseWithSampleData($config) {
         createTableIndexes($config, $tableName, $db);
     }
     
-    // サンプルデータ（小山市内のカレーショップ例）
-    $shops = [
-        [
-            'name' => 'カレーショップA',
-            'lat' => 36.3141,
-            'lng' => 139.8006,
-            'address' => '小山市中央町1-1-1',
-            'description' => '地元で愛される老舗カレーショップ',
-            'phone' => '0285-12-3456',
-            'website' => 'https://curry-shop-a.example.com',
-            'business_hours' => '11:00-21:00',
-            'sns_account' => '@curry_shop_a',
-            'category' => '日本式カレー'
-        ],
-        [
-            'name' => 'カレーショップB',
-            'lat' => 36.3085,
-            'lng' => 139.8062,
-            'address' => '小山市駅東通り2-2-2',
-            'description' => '駅近で便利な本格カレー店',
-            'phone' => '0285-23-4567',
-            'website' => 'https://curry-shop-b.example.com',
-            'business_hours' => '11:30-22:00',
-            'sns_account' => '@curry_shop_b',
-            'category' => '欧風カレー'
-        ],
-        [
-            'name' => 'カレーショップC',
-            'lat' => 36.3120,
-            'lng' => 139.7970,
-            'address' => '小山市城山町3-3-3',
-            'description' => '手作りスパイスの本格インドカレー',
-            'phone' => '0285-34-5678',
-            'website' => 'https://curry-shop-c.example.com',
-            'business_hours' => '11:00-15:00, 17:00-21:00',
-            'sns_account' => '@curry_shop_c',
-            'category' => 'インドカレー'
-        ],
-    ];
+    // サンプルデータ（設定ファイルから取得）
+    $shops = $config['sample_data'];
     
     foreach ($shops as $shop) {
         $stmt = $db->prepare('INSERT INTO shops (name, lat, lng, address, description, phone, website, business_hours, sns_account, category) VALUES (:name, :lat, :lng, :address, :description, :phone, :website, :business_hours, :sns_account, :category)');

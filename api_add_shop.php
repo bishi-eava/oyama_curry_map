@@ -3,6 +3,7 @@
 require_once 'auth_check.php';
 
 header('Content-Type: application/json; charset=UTF-8');
+$config = getConfig();
 
 // 認証チェック
 if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
@@ -64,7 +65,7 @@ if ($result) {
     
     // 画像ファイルの処理
     if ($isFormData && isset($_FILES['images'])) {
-        $uploadDir = __DIR__ . '/shop_images/';
+        $uploadDir = __DIR__ . '/' . $config['storage']['images_dir'] . '/';
         if (!is_dir($uploadDir)) {
             mkdir($uploadDir, 0777, true);
         }

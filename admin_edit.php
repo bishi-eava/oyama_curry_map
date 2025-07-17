@@ -104,7 +104,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['name'])) {
                 if ($result) {
                     // 新しい画像の処理
                     if (isset($_FILES['new_images']) && $_FILES['new_images']['error'][0] !== UPLOAD_ERR_NO_FILE) {
-                        $uploadDir = __DIR__ . '/shop_images/';
+                        $uploadDir = __DIR__ . '/' . $config['storage']['images_dir'] . '/';
                         if (!is_dir($uploadDir)) {
                             mkdir($uploadDir, 0777, true);
                         }
@@ -193,7 +193,7 @@ if (isset($_GET['delete_image'])) {
     
     if ($imageRow) {
         // ファイルを削除
-        $filePath = __DIR__ . '/shop_images/' . $imageRow['filename'];
+        $filePath = __DIR__ . '/' . $config['storage']['images_dir'] . '/' . $imageRow['filename'];
         if (file_exists($filePath)) {
             unlink($filePath);
         }
@@ -258,11 +258,9 @@ if (isset($_GET['delete_image'])) {
                     <label for="category">カテゴリー *</label>
                     <select id="category" name="category" required>
                         <option value="">カテゴリーを選択してください</option>
-                        <option value="インドカレー" <?= ($shop['category'] === 'インドカレー') ? 'selected' : '' ?>>インドカレー</option>
-                        <option value="タイカレー" <?= ($shop['category'] === 'タイカレー') ? 'selected' : '' ?>>タイカレー</option>
-                        <option value="欧風カレー" <?= ($shop['category'] === '欧風カレー') ? 'selected' : '' ?>>欧風カレー</option>
-                        <option value="日本式カレー" <?= ($shop['category'] === '日本式カレー') ? 'selected' : '' ?>>日本式カレー</option>
-                        <option value="その他" <?= ($shop['category'] === 'その他') ? 'selected' : '' ?>>その他</option>
+                        <?php foreach ($config['app']['categories'] as $category): ?>
+                            <option value="<?= htmlspecialchars($category) ?>" <?= ($shop['category'] === $category) ? 'selected' : '' ?>><?= htmlspecialchars($category) ?></option>
+                        <?php endforeach; ?>
                     </select>
                 </div>
                 
@@ -316,7 +314,7 @@ if (isset($_GET['delete_image'])) {
                         <?php else: ?>
                             <?php foreach ($images as $image): ?>
                                 <div class="image-item">
-                                    <img src="shop_images/<?= htmlspecialchars($image['filename']) ?>" 
+                                    <img src="<?= htmlspecialchars($config['storage']['images_dir']) ?>/<?= htmlspecialchars($image['filename']) ?>" 
                                          title="<?= htmlspecialchars($image['original_name']) ?>">
                                     <button type="button" class="delete-btn" 
                                             onclick="deleteImage(<?= $image['id'] ?>)">×</button>
