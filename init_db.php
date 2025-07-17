@@ -178,39 +178,57 @@ if ($hasData) {
     echo "</div>";
 }
 
+// テーブル構造読み込み用ヘルパー関数
+function getTableSchema($config, $tableName) {
+    if (!isset($config['database']['tables'][$tableName])) {
+        throw new Exception("Table '{$tableName}' not found in configuration");
+    }
+    
+    $table = $config['database']['tables'][$tableName];
+    $columns = $table['columns'];
+    
+    // CREATE TABLE文の生成
+    $sql = "CREATE TABLE IF NOT EXISTS {$tableName} (\n";
+    $columnDefinitions = [];
+    
+    foreach ($columns as $columnName => $columnType) {
+        $columnDefinitions[] = "        {$columnName} {$columnType}";
+    }
+    
+    $sql .= implode(",\n", $columnDefinitions);
+    
+    // 外部キー制約の追加
+    if (isset($table['foreign_keys'])) {
+        foreach ($table['foreign_keys'] as $keyName => $keyDef) {
+            $sql .= ",\n        FOREIGN KEY ({$keyName}) REFERENCES {$keyDef['references']}";
+            if (isset($keyDef['on_delete'])) {
+                $sql .= " ON DELETE {$keyDef['on_delete']}";
+            }
+        }
+    }
+    
+    $sql .= "\n    )";
+    
+    return $sql;
+}
+
 // 構成のみ更新関数（データ保持）
 function updateDatabaseSchema($config) {
     $db = new SQLite3($config['database']['path']);
     
-    // テーブル作成（既存データは保持）
-    $db->exec('CREATE TABLE IF NOT EXISTS shops (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        lat REAL NOT NULL,
-        lng REAL NOT NULL,
-        address TEXT,
-        description TEXT,
-        phone TEXT,
-        website TEXT,
-        business_hours TEXT,
-        sns_account TEXT,
-        category TEXT,
-        review TEXT,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )');
+    // 設定からテーブル構造を取得してテーブル作成
+    $shopsTableSQL = getTableSchema($config, 'shops');
+    $db->exec($shopsTableSQL);
     
-    // 既存テーブルに新しいカラムを追加（カラム存在チェック付き）
-    $columns = [
-        'description' => 'TEXT',
-        'phone' => 'TEXT',
-        'website' => 'TEXT',
-        'business_hours' => 'TEXT',
-        'sns_account' => 'TEXT',
-        'category' => 'TEXT',
-        'updated_at' => 'DATETIME'
-    ];
+    // 既存テーブルに新しいカラムを追加（設定ファイルベース）
+    $shopColumns = $config['database']['tables']['shops']['columns'];
     
-    foreach ($columns as $columnName => $columnType) {
+    foreach ($shopColumns as $columnName => $columnType) {
+        // idカラムはスキップ（既存のPRIMARY KEYのため）
+        if ($columnName === 'id') {
+            continue;
+        }
+        
         // カラム存在チェック
         $checkResult = $db->query("PRAGMA table_info(shops)");
         $columnExists = false;
@@ -240,22 +258,12 @@ function updateDatabaseSchema($config) {
         }
     }
     
-    $db->exec('CREATE TABLE IF NOT EXISTS shop_images (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        shop_id INTEGER NOT NULL,
-        filename TEXT NOT NULL,
-        original_name TEXT NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (shop_id) REFERENCES shops (id) ON DELETE CASCADE
-    )');
+    // 他のテーブルも設定から作成
+    $shopImagesTableSQL = getTableSchema($config, 'shop_images');
+    $db->exec($shopImagesTableSQL);
     
-    $db->exec('CREATE TABLE IF NOT EXISTS admin_settings (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        setting_key TEXT UNIQUE NOT NULL,
-        setting_value TEXT NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )');
+    $adminSettingsTableSQL = getTableSchema($config, 'admin_settings');
+    $db->exec($adminSettingsTableSQL);
     
     // テーブル構造の確認結果を取得
     $tableInfo = [];
@@ -292,39 +300,15 @@ function resetDatabaseWithSampleData($config) {
         }
     }
     
-    // テーブル再作成
-    $db->exec('CREATE TABLE IF NOT EXISTS shops (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        lat REAL NOT NULL,
-        lng REAL NOT NULL,
-        address TEXT,
-        description TEXT,
-        phone TEXT,
-        website TEXT,
-        business_hours TEXT,
-        sns_account TEXT,
-        category TEXT,
-        review TEXT,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )');
+    // テーブル再作成（設定ファイルから）
+    $shopsTableSQL = getTableSchema($config, 'shops');
+    $db->exec($shopsTableSQL);
     
-    $db->exec('CREATE TABLE IF NOT EXISTS shop_images (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        shop_id INTEGER NOT NULL,
-        filename TEXT NOT NULL,
-        original_name TEXT NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (shop_id) REFERENCES shops (id) ON DELETE CASCADE
-    )');
+    $shopImagesTableSQL = getTableSchema($config, 'shop_images');
+    $db->exec($shopImagesTableSQL);
     
-    $db->exec('CREATE TABLE IF NOT EXISTS admin_settings (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        setting_key TEXT UNIQUE NOT NULL,
-        setting_value TEXT NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )');
+    $adminSettingsTableSQL = getTableSchema($config, 'admin_settings');
+    $db->exec($adminSettingsTableSQL);
     
     // サンプルデータ（小山市内のカレーショップ例）
     $shops = [

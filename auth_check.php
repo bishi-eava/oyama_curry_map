@@ -3,9 +3,22 @@
 
 session_start();
 
-// config.phpのパスを取得する関数
+// config.phpのパスを取得する関数（環境に応じて自動検索）
 function getConfigPath() {
-    return __DIR__ . '/../../../app_db/oyama_curry_map/config.php';
+    $searchPaths = [
+        __DIR__ . '/../../app_db/oyama_curry_map/config.php',        // さくらサーバー用
+        __DIR__ . '/../../../app_db/oyama_curry_map/config.php',     // ローカル用
+        __DIR__ . '/app_db/oyama_curry_map/config.php',              // その他
+        __DIR__ . '/../app_db/oyama_curry_map/config.php',           // 別パターン
+    ];
+    
+    foreach ($searchPaths as $path) {
+        if (file_exists($path)) {
+            return $path;
+        }
+    }
+    
+    throw new Exception('Config file not found. Searched paths: ' . implode(', ', $searchPaths));
 }
 
 // config設定を取得する関数

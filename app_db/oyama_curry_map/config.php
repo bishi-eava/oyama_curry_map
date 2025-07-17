@@ -10,7 +10,50 @@ if (!defined('CONFIG_ACCESS_ALLOWED')) {
 return [
     // データベース設定
     'database' => [
-        'path' => __DIR__ . '/curry_shops.db'
+        'path' => __DIR__ . '/curry_shops.db',
+        'tables' => [
+            'shops' => [
+                'columns' => [
+                    'id' => 'INTEGER PRIMARY KEY AUTOINCREMENT',
+                    'name' => 'TEXT NOT NULL',
+                    'lat' => 'REAL NOT NULL',
+                    'lng' => 'REAL NOT NULL',
+                    'address' => 'TEXT',
+                    'description' => 'TEXT',
+                    'phone' => 'TEXT',
+                    'website' => 'TEXT',
+                    'business_hours' => 'TEXT',
+                    'sns_account' => 'TEXT',
+                    'category' => 'TEXT',
+                    'review' => 'TEXT',
+                    'updated_at' => 'DATETIME DEFAULT CURRENT_TIMESTAMP'
+                ]
+            ],
+            'shop_images' => [
+                'columns' => [
+                    'id' => 'INTEGER PRIMARY KEY AUTOINCREMENT',
+                    'shop_id' => 'INTEGER NOT NULL',
+                    'filename' => 'TEXT NOT NULL',
+                    'original_name' => 'TEXT NOT NULL',
+                    'created_at' => 'DATETIME DEFAULT CURRENT_TIMESTAMP'
+                ],
+                'foreign_keys' => [
+                    'shop_id' => [
+                        'references' => 'shops(id)',
+                        'on_delete' => 'CASCADE'
+                    ]
+                ]
+            ],
+            'admin_settings' => [
+                'columns' => [
+                    'id' => 'INTEGER PRIMARY KEY AUTOINCREMENT',
+                    'setting_key' => 'TEXT UNIQUE NOT NULL',
+                    'setting_value' => 'TEXT NOT NULL',
+                    'created_at' => 'DATETIME DEFAULT CURRENT_TIMESTAMP',
+                    'updated_at' => 'DATETIME DEFAULT CURRENT_TIMESTAMP'
+                ]
+            ]
+        ]
     ],
     
     // 管理者設定
