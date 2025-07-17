@@ -27,6 +27,11 @@ return [
                     'category' => 'TEXT',
                     'review' => 'TEXT',
                     'updated_at' => 'DATETIME DEFAULT CURRENT_TIMESTAMP'
+                ],
+                'indexes' => [
+                    'idx_shops_location' => ['lat', 'lng'],
+                    'idx_shops_updated_at' => ['updated_at'],
+                    'idx_shops_category' => ['category']
                 ]
             ],
             'shop_images' => [
@@ -42,6 +47,10 @@ return [
                         'references' => 'shops(id)',
                         'on_delete' => 'CASCADE'
                     ]
+                ],
+                'indexes' => [
+                    'idx_shop_images_shop_id' => ['shop_id'],
+                    'idx_shop_images_created_at' => ['created_at']
                 ]
             ],
             'admin_settings' => [
@@ -51,9 +60,14 @@ return [
                     'setting_value' => 'TEXT NOT NULL',
                     'created_at' => 'DATETIME DEFAULT CURRENT_TIMESTAMP',
                     'updated_at' => 'DATETIME DEFAULT CURRENT_TIMESTAMP'
+                ],
+                'indexes' => [
+                    'idx_admin_settings_key' => ['setting_key'],
+                    'idx_admin_settings_updated_at' => ['updated_at']
                 ]
             ]
-        ]
+        ],
+        'drop_order' => ['shop_images', 'shops', 'admin_settings']
     ],
     
     // 管理者設定

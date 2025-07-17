@@ -178,10 +178,55 @@ if ($hasData) {
     echo "</div>";
 }
 
+// 設定ファイル構造検証機能
+function validateConfig($config) {
+    $requiredKeys = ['database', 'app', 'admin'];
+    foreach ($requiredKeys as $key) {
+        if (!isset($config[$key])) {
+            throw new Exception("Missing required config section: {$key}");
+        }
+    }
+    
+    // データベース設定の検証
+    if (!isset($config['database']['tables'])) {
+        throw new Exception("Missing database.tables configuration");
+    }
+    
+    validateTableConfig($config);
+}
+
+function validateTableConfig($config) {
+    $required = ['columns'];
+    $tables = $config['database']['tables'];
+    
+    foreach ($tables as $tableName => $tableConfig) {
+        foreach ($required as $key) {
+            if (!isset($tableConfig[$key])) {
+                throw new Exception("Missing {$key} in table {$tableName}");
+            }
+        }
+        
+        // カラム定義の検証
+        if (empty($tableConfig['columns'])) {
+            throw new Exception("Table {$tableName} has no columns defined");
+        }
+        
+        // 外部キー制約の検証
+        if (isset($tableConfig['foreign_keys'])) {
+            foreach ($tableConfig['foreign_keys'] as $fkName => $fkConfig) {
+                if (!isset($fkConfig['references'])) {
+                    throw new Exception("Foreign key {$fkName} in table {$tableName} missing references");
+                }
+            }
+        }
+    }
+}
+
 // テーブル構造読み込み用ヘルパー関数
 function getTableSchema($config, $tableName) {
     if (!isset($config['database']['tables'][$tableName])) {
-        throw new Exception("Table '{$tableName}' not found in configuration");
+        $available = implode(', ', array_keys($config['database']['tables']));
+        throw new Exception("Table '{$tableName}' not found in configuration. Available tables: {$available}");
     }
     
     $table = $config['database']['tables'][$tableName];
@@ -212,8 +257,45 @@ function getTableSchema($config, $tableName) {
     return $sql;
 }
 
+// インデックス作成用ヘルパー関数
+function createTableIndexes($config, $tableName, $db) {
+    if (!isset($config['database']['tables'][$tableName]['indexes'])) {
+        return; // インデックス定義がない場合は何もしない
+    }
+    
+    $indexes = $config['database']['tables'][$tableName]['indexes'];
+    
+    foreach ($indexes as $indexName => $columns) {
+        $columnList = implode(', ', $columns);
+        $sql = "CREATE INDEX IF NOT EXISTS {$indexName} ON {$tableName} ({$columnList})";
+        
+        try {
+            $db->exec($sql);
+        } catch (Exception $e) {
+            error_log("Failed to create index {$indexName}: " . $e->getMessage());
+        }
+    }
+}
+
+// テーブル削除用ヘルパー関数
+function dropAllTables($config, $db) {
+    // 設定ファイルから削除順序を取得
+    $dropOrder = $config['database']['drop_order'] ?? array_keys($config['database']['tables']);
+    
+    foreach ($dropOrder as $tableName) {
+        try {
+            $db->exec("DROP TABLE IF EXISTS {$tableName}");
+        } catch (Exception $e) {
+            error_log("Failed to drop table {$tableName}: " . $e->getMessage());
+        }
+    }
+}
+
 // 構成のみ更新関数（データ保持）
 function updateDatabaseSchema($config) {
+    // 設定ファイルの検証
+    validateConfig($config);
+    
     $db = new SQLite3($config['database']['path']);
     
     // 設定からテーブル構造を取得してテーブル作成
@@ -265,6 +347,11 @@ function updateDatabaseSchema($config) {
     $adminSettingsTableSQL = getTableSchema($config, 'admin_settings');
     $db->exec($adminSettingsTableSQL);
     
+    // 全テーブルのインデックスを作成
+    createTableIndexes($config, 'shops', $db);
+    createTableIndexes($config, 'shop_images', $db);
+    createTableIndexes($config, 'admin_settings', $db);
+    
     // テーブル構造の確認結果を取得
     $tableInfo = [];
     $result = $db->query("PRAGMA table_info(shops)");
@@ -282,12 +369,13 @@ function updateDatabaseSchema($config) {
 
 // 全削除初期化関数（サンプルデータのみ）
 function resetDatabaseWithSampleData($config) {
+    // 設定ファイルの検証
+    validateConfig($config);
+    
     $db = new SQLite3($config['database']['path']);
     
-    // テーブルを削除（既存データクリア）
-    $db->exec('DROP TABLE IF EXISTS shop_images');
-    $db->exec('DROP TABLE IF EXISTS shops');
-    $db->exec('DROP TABLE IF EXISTS admin_settings');
+    // テーブルを削除（設定ファイルベース）
+    dropAllTables($config, $db);
     
     // 既存の画像ファイルも削除
     $imageDir = __DIR__ . '/shop_images/';
@@ -301,14 +389,14 @@ function resetDatabaseWithSampleData($config) {
     }
     
     // テーブル再作成（設定ファイルから）
-    $shopsTableSQL = getTableSchema($config, 'shops');
-    $db->exec($shopsTableSQL);
-    
-    $shopImagesTableSQL = getTableSchema($config, 'shop_images');
-    $db->exec($shopImagesTableSQL);
-    
-    $adminSettingsTableSQL = getTableSchema($config, 'admin_settings');
-    $db->exec($adminSettingsTableSQL);
+    $tables = array_keys($config['database']['tables']);
+    foreach ($tables as $tableName) {
+        $tableSQL = getTableSchema($config, $tableName);
+        $db->exec($tableSQL);
+        
+        // インデックスも作成
+        createTableIndexes($config, $tableName, $db);
+    }
     
     // サンプルデータ（小山市内のカレーショップ例）
     $shops = [
