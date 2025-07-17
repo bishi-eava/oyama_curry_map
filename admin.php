@@ -17,7 +17,7 @@ if (isset($_GET['delete'])) {
     $id = intval($_GET['delete']);
     
     // 関連する画像ファイルを削除
-    $imageRes = $db->query("SELECT filename FROM shop_images WHERE shop_id = $id");
+    $imageRes = $db->query("SELECT filename FROM facility_images WHERE facility_id = $id");
     while ($imageRow = $imageRes->fetchArray(SQLITE3_ASSOC)) {
         $filePath = __DIR__ . '/' . $config['storage']['images_dir'] . '/' . $imageRow['filename'];
         if (file_exists($filePath)) {
@@ -26,13 +26,13 @@ if (isset($_GET['delete'])) {
     }
     
     // データベースから削除（外部キー制約により画像も自動削除）
-    $db->exec("DELETE FROM shops WHERE id = $id");
+    $db->exec("DELETE FROM facilities WHERE id = $id");
     header('Location: admin.php');
     exit;
 }
 
 
-$res = $db->query('SELECT * FROM shops ORDER BY id DESC');
+$res = $db->query('SELECT * FROM facilities ORDER BY id DESC');
 ?>
 <!DOCTYPE html>
 <html lang="ja">
@@ -143,8 +143,8 @@ $res = $db->query('SELECT * FROM shops ORDER BY id DESC');
             <td class="col-images">
                 <?php
                 // 施設の画像を取得
-                $imageStmt = $db->prepare('SELECT id, filename, original_name FROM shop_images WHERE shop_id = :shop_id ORDER BY id');
-                $imageStmt->bindValue(':shop_id', $row['id'], SQLITE3_INTEGER);
+                $imageStmt = $db->prepare('SELECT id, filename, original_name FROM facility_images WHERE facility_id = :facility_id ORDER BY id');
+                $imageStmt->bindValue(':facility_id', $row['id'], SQLITE3_INTEGER);
                 $imageRes = $imageStmt->execute();
                 
                 $imageCount = 0;

@@ -92,7 +92,7 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 帰属表示は以下のファイルで実装されています：
 
 - `index.php` - メインページの地図
-- `shop_detail.php` - 店舗詳細ページの地図  
+- `facility_detail.php` - 店舗詳細ページの地図  
 - `admin_add.php` - 管理者新規登録ページの地図
 - `admin_edit.php` - 管理者編集ページの地図
 

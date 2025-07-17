@@ -1,31 +1,31 @@
 <?php
-// 店舗詳細表示ページ
+// 施設詳細表示ページ
 require_once 'auth_check.php';
 $config = getConfig();
 
-// 店舗IDのチェック
+// 施設IDのチェック
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
     header('HTTP/1.0 404 Not Found');
     die("{$config['app']['facility_name']}が見つかりません。");
 }
 
-$shopId = intval($_GET['id']);
+$facilityId = intval($_GET['id']);
 
-// データベースから店舗情報を取得
+// データベースから施設情報を取得
 $db = getDatabase();
-$stmt = $db->prepare('SELECT * FROM shops WHERE id = :id');
-$stmt->bindValue(':id', $shopId, SQLITE3_INTEGER);
+$stmt = $db->prepare('SELECT * FROM facilities WHERE id = :id');
+$stmt->bindValue(':id', $facilityId, SQLITE3_INTEGER);
 $result = $stmt->execute();
-$shop = $result->fetchArray(SQLITE3_ASSOC);
+$facility = $result->fetchArray(SQLITE3_ASSOC);
 
-if (!$shop) {
+if (!$facility) {
     header('HTTP/1.0 404 Not Found');
     die("{$config['app']['facility_name']}が見つかりません。");
 }
 
-// 店舗の画像を取得
-$imageStmt = $db->prepare('SELECT filename, original_name FROM shop_images WHERE shop_id = :shop_id ORDER BY id');
-$imageStmt->bindValue(':shop_id', $shopId, SQLITE3_INTEGER);
+// 施設の画像を取得
+$imageStmt = $db->prepare('SELECT filename, original_name FROM facility_images WHERE facility_id = :facility_id ORDER BY id');
+$imageStmt->bindValue(':facility_id', $facilityId, SQLITE3_INTEGER);
 $imageRes = $imageStmt->execute();
 
 $images = [];
@@ -41,7 +41,7 @@ while ($imageRow = $imageRes->fetchArray(SQLITE3_ASSOC)) {
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title><?= htmlspecialchars($shop['name']) ?> - <?= htmlspecialchars($config['app']['name']) ?></title>
+    <title><?= htmlspecialchars($facility['name']) ?> - <?= htmlspecialchars($config['app']['name']) ?></title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <link rel="stylesheet" href="css/common.css" />
@@ -55,36 +55,36 @@ while ($imageRow = $imageRes->fetchArray(SQLITE3_ASSOC)) {
         </div>
     </div>
     
-    <div class="shop-detail-container">
+    <div class="facility-detail-container">
         <div class="detail-section">
-            <h2 class="shop-title"><?= htmlspecialchars($shop['name']) ?></h2>
+            <h2 class="facility-title"><?= htmlspecialchars($facility['name']) ?></h2>
             
             <div class="form-group">
                 <span class="field-label"><?= htmlspecialchars($config['app']['field_labels']['category']) ?></span>
-                <div class="readonly-field <?= empty(trim($shop['category'])) ? 'empty' : '' ?>">
-                    <?= !empty(trim($shop['category'])) ? htmlspecialchars($shop['category']) : htmlspecialchars($config['app']['field_labels']['category']) . '情報がありません' ?>
+                <div class="readonly-field <?= empty(trim($facility['category'])) ? 'empty' : '' ?>">
+                    <?= !empty(trim($facility['category'])) ? htmlspecialchars($facility['category']) : htmlspecialchars($config['app']['field_labels']['category']) . '情報がありません' ?>
                 </div>
             </div>
             
             <div class="form-group">
                 <span class="field-label" style="font-weight: 700; color: #212529; font-size: 1.1em;"><?= htmlspecialchars($config['app']['field_labels']['address']) ?></span>
-                <div class="readonly-field <?= empty(trim($shop['address'])) ? 'empty' : '' ?>" style="background: #f8f9fa; border: 1px solid #e9ecef; padding: 1em; border-radius: 6px; margin-bottom: 0.5em;">
-                    <?= !empty(trim($shop['address'])) ? htmlspecialchars($shop['address']) : htmlspecialchars($config['app']['field_labels']['address']) . '情報がありません' ?>
+                <div class="readonly-field <?= empty(trim($facility['address'])) ? 'empty' : '' ?>" style="background: #f8f9fa; border: 1px solid #e9ecef; padding: 1em; border-radius: 6px; margin-bottom: 0.5em;">
+                    <?= !empty(trim($facility['address'])) ? htmlspecialchars($facility['address']) : htmlspecialchars($config['app']['field_labels']['address']) . '情報がありません' ?>
                 </div>
             </div>
             
             <div class="form-group">
                 <span class="field-label"><?= htmlspecialchars($config['app']['field_labels']['description']) ?></span>
-                <div class="readonly-field <?= empty(trim($shop['description'])) ? 'empty' : '' ?>">
-                    <?= !empty(trim($shop['description'])) ? nl2br(htmlspecialchars($shop['description'])) : htmlspecialchars($config['app']['field_labels']['description']) . 'がありません' ?>
+                <div class="readonly-field <?= empty(trim($facility['description'])) ? 'empty' : '' ?>">
+                    <?= !empty(trim($facility['description'])) ? nl2br(htmlspecialchars($facility['description'])) : htmlspecialchars($config['app']['field_labels']['description']) . 'がありません' ?>
                 </div>
             </div>
             
             <div class="form-group">
                 <span class="field-label"><?= htmlspecialchars($config['app']['field_labels']['phone']) ?></span>
-                <div class="readonly-field <?= empty(trim($shop['phone'])) ? 'empty' : '' ?>">
-                    <?php if (!empty(trim($shop['phone']))): ?>
-                        <a href="tel:<?= htmlspecialchars($shop['phone']) ?>"><?= htmlspecialchars($shop['phone']) ?></a>
+                <div class="readonly-field <?= empty(trim($facility['phone'])) ? 'empty' : '' ?>">
+                    <?php if (!empty(trim($facility['phone']))): ?>
+                        <a href="tel:<?= htmlspecialchars($facility['phone']) ?>"><?= htmlspecialchars($facility['phone']) ?></a>
                     <?php else: ?>
                         <?= htmlspecialchars($config['app']['field_labels']['phone']) ?>がありません
                     <?php endif; ?>
@@ -93,9 +93,9 @@ while ($imageRow = $imageRes->fetchArray(SQLITE3_ASSOC)) {
             
             <div class="form-group">
                 <span class="field-label"><?= htmlspecialchars($config['app']['field_labels']['website']) ?></span>
-                <div class="readonly-field <?= empty(trim($shop['website'])) ? 'empty' : '' ?>">
-                    <?php if (!empty(trim($shop['website']))): ?>
-                        <a href="<?= htmlspecialchars($shop['website']) ?>" target="_blank"><?= htmlspecialchars($shop['website']) ?></a>
+                <div class="readonly-field <?= empty(trim($facility['website'])) ? 'empty' : '' ?>">
+                    <?php if (!empty(trim($facility['website']))): ?>
+                        <a href="<?= htmlspecialchars($facility['website']) ?>" target="_blank"><?= htmlspecialchars($facility['website']) ?></a>
                     <?php else: ?>
                         <?= htmlspecialchars($config['app']['field_labels']['website']) ?>がありません
                     <?php endif; ?>
@@ -104,17 +104,17 @@ while ($imageRow = $imageRes->fetchArray(SQLITE3_ASSOC)) {
             
             <div class="form-group">
                 <span class="field-label"><?= htmlspecialchars($config['app']['field_labels']['business_hours']) ?></span>
-                <div class="readonly-field <?= empty(trim($shop['business_hours'])) ? 'empty' : '' ?>">
-                    <?= !empty(trim($shop['business_hours'])) ? htmlspecialchars($shop['business_hours']) : htmlspecialchars($config['app']['field_labels']['business_hours']) . '情報がありません' ?>
+                <div class="readonly-field <?= empty(trim($facility['business_hours'])) ? 'empty' : '' ?>">
+                    <?= !empty(trim($facility['business_hours'])) ? htmlspecialchars($facility['business_hours']) : htmlspecialchars($config['app']['field_labels']['business_hours']) . '情報がありません' ?>
                 </div>
             </div>
             
             <div class="form-group">
                 <span class="field-label"><?= htmlspecialchars($config['app']['field_labels']['sns_account']) ?></span>
-                <div class="readonly-field <?= empty(trim($shop['sns_account'])) ? 'empty' : '' ?>">
-                    <?php if (!empty(trim($shop['sns_account']))): ?>
+                <div class="readonly-field <?= empty(trim($facility['sns_account'])) ? 'empty' : '' ?>">
+                    <?php if (!empty(trim($facility['sns_account']))): ?>
                         <?php
-                        $snsAccount = trim($shop['sns_account']);
+                        $snsAccount = trim($facility['sns_account']);
                         
                         // 完全URLまたは@形式のみリンクとして処理
                         if (strpos($snsAccount, 'http') === 0) {
@@ -136,11 +136,11 @@ while ($imageRow = $imageRes->fetchArray(SQLITE3_ASSOC)) {
                 </div>
             </div>
             
-            <?php if (!empty(trim($shop['review']))): ?>
+            <?php if (!empty(trim($facility['review']))): ?>
             <div class="form-group">
                 <span class="field-label"><?= htmlspecialchars($config['app']['field_labels']['review']) ?></span>
                 <div class="review-section">
-                    <?= nl2br(htmlspecialchars($shop['review'])) ?>
+                    <?= nl2br(htmlspecialchars($facility['review'])) ?>
                 </div>
             </div>
             <?php endif; ?>
@@ -148,9 +148,9 @@ while ($imageRow = $imageRes->fetchArray(SQLITE3_ASSOC)) {
             <?php if (!empty($images)): ?>
             <div class="form-group">
                 <span class="field-label"><?= htmlspecialchars($config['app']['field_labels']['images']) ?> (<?= count($images) ?>枚)</span>
-                <div class="shop-images">
+                <div class="facility-images">
                     <?php foreach ($images as $image): ?>
-                        <div class="shop-image" onclick="showImageModal('<?= htmlspecialchars($image['url']) ?>', '<?= htmlspecialchars($image['original_name']) ?>')">
+                        <div class="facility-image" onclick="showImageModal('<?= htmlspecialchars($image['url']) ?>', '<?= htmlspecialchars($image['original_name']) ?>')">
                             <img src="<?= htmlspecialchars($image['url']) ?>" alt="<?= htmlspecialchars($image['original_name']) ?>">
                         </div>
                     <?php endforeach; ?>
@@ -161,7 +161,7 @@ while ($imageRow = $imageRes->fetchArray(SQLITE3_ASSOC)) {
             <div class="form-group">
                 <span class="field-label">最終更新日時</span>
                 <div class="readonly-field">
-                    <?= htmlspecialchars($shop['updated_at']) ?>
+                    <?= htmlspecialchars($facility['updated_at']) ?>
                 </div>
             </div>
         </div>
@@ -180,7 +180,7 @@ while ($imageRow = $imageRes->fetchArray(SQLITE3_ASSOC)) {
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script>
         // 地図の初期化
-        const map = L.map('map').setView([<?= $shop['lat'] ?>, <?= $shop['lng'] ?>], 16);
+        const map = L.map('map').setView([<?= $facility['lat'] ?>, <?= $facility['lng'] ?>], 16);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
@@ -195,9 +195,9 @@ while ($imageRow = $imageRes->fetchArray(SQLITE3_ASSOC)) {
             shadowSize: [41, 41]
         });
         
-        L.marker([<?= $shop['lat'] ?>, <?= $shop['lng'] ?>], {icon})
+        L.marker([<?= $facility['lat'] ?>, <?= $facility['lng'] ?>], {icon})
             .addTo(map)
-            .bindPopup('<b><?= htmlspecialchars($shop['name']) ?></b>')
+            .bindPopup('<b><?= htmlspecialchars($facility['name']) ?></b>')
             .openPopup();
         
         // 画像モーダル表示機能

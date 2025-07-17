@@ -34,7 +34,7 @@ if (!isset($data['name'], $data['lat'], $data['lng'])) {
 
 $db = getDatabase();
 // 同じ名前の施設が既に存在するかチェック
-$stmt = $db->prepare('SELECT COUNT(*) as cnt FROM shops WHERE name = :name');
+$stmt = $db->prepare('SELECT COUNT(*) as cnt FROM facilities WHERE name = :name');
 $stmt->bindValue(':name', $data['name'], SQLITE3_TEXT);
 $res = $stmt->execute();
 $row = $res->fetchArray(SQLITE3_ASSOC);
@@ -46,7 +46,7 @@ if ($row['cnt'] > 0) {
 
 // 日本時間でupdated_atを設定
 $japanTime = date('Y-m-d H:i:s', time());
-$stmt = $db->prepare('INSERT INTO shops (name, lat, lng, address, description, phone, website, business_hours, sns_account, review, updated_at) VALUES (:name, :lat, :lng, :address, :description, :phone, :website, :business_hours, :sns_account, :review, :updated_at)');
+$stmt = $db->prepare('INSERT INTO facilities (name, lat, lng, address, description, phone, website, business_hours, sns_account, review, updated_at) VALUES (:name, :lat, :lng, :address, :description, :phone, :website, :business_hours, :sns_account, :review, :updated_at)');
 $stmt->bindValue(':name', $data['name'], SQLITE3_TEXT);
 $stmt->bindValue(':lat', $data['lat'], SQLITE3_FLOAT);
 $stmt->bindValue(':lng', $data['lng'], SQLITE3_FLOAT);
@@ -61,7 +61,7 @@ $stmt->bindValue(':updated_at', $japanTime, SQLITE3_TEXT);
 $result = $stmt->execute();
 
 if ($result) {
-    $shopId = $db->lastInsertRowID();
+    $facilityId = $db->lastInsertRowID();
     
     // 画像ファイルの処理
     if ($isFormData && isset($_FILES['images'])) {
@@ -104,13 +104,13 @@ if ($result) {
                 
                 // ファイル名生成（重複防止）
                 $extension = pathinfo($fileName, PATHINFO_EXTENSION);
-                $newFileName = $shopId . '_' . uniqid() . '.' . $extension;
+                $newFileName = $facilityId . '_' . uniqid() . '.' . $extension;
                 $filePath = $uploadDir . $newFileName;
                 
                 if (move_uploaded_file($fileTmpName, $filePath)) {
                     // データベースに画像情報を保存
-                    $stmt = $db->prepare('INSERT INTO shop_images (shop_id, filename, original_name) VALUES (:shop_id, :filename, :original_name)');
-                    $stmt->bindValue(':shop_id', $shopId, SQLITE3_INTEGER);
+                    $stmt = $db->prepare('INSERT INTO facility_images (facility_id, filename, original_name) VALUES (:facility_id, :filename, :original_name)');
+                    $stmt->bindValue(':facility_id', $facilityId, SQLITE3_INTEGER);
                     $stmt->bindValue(':filename', $newFileName, SQLITE3_TEXT);
                     $stmt->bindValue(':original_name', $fileName, SQLITE3_TEXT);
                     $stmt->execute();

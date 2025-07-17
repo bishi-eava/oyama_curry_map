@@ -16,16 +16,16 @@
 }
 
 /* ポップアップ内の詳細ボタン */
-.leaflet-popup-content a[href*="shop_detail.php"] {
+.leaflet-popup-content a[href*="facility_detail.php"] {
     transition: background-color 0.2s ease;
 }
 
-.leaflet-popup-content a[href*="shop_detail.php"]:hover {
+.leaflet-popup-content a[href*="facility_detail.php"]:hover {
     background: #e0a000 !important;
 }
 
 /* 店舗詳細ページ専用スタイル */
-.shop-detail-container {
+.facility-detail-container {
     display: grid;
     grid-template-columns: 1fr 1fr;
     min-height: calc(100vh - 80px);
@@ -51,7 +51,7 @@
     width: 100%; 
 }
 
-.shop-detail-container .readonly-field {
+.facility-detail-container .readonly-field {
     background: #f8f9fa !important;
     border: 1px solid #e9ecef !important;
     padding: 1em !important;
@@ -66,7 +66,7 @@
     font-style: italic;
 }
 
-.shop-detail-container .field-label {
+.facility-detail-container .field-label {
     font-weight: 700 !important;
     color: #212529 !important;
     margin-bottom: 0.6em;
@@ -74,11 +74,11 @@
     font-size: 1.1em;
 }
 
-.shop-detail-container .form-group {
+.facility-detail-container .form-group {
     margin-bottom: 1.5em;
 }
 
-.shop-images {
+.facility-images {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
     gap: 0.8em;
@@ -86,7 +86,7 @@
     max-width: 600px;
 }
 
-.shop-image {
+.facility-image {
     aspect-ratio: 1;
     border-radius: 8px;
     overflow: hidden;
@@ -96,17 +96,17 @@
     max-height: 150px;
 }
 
-.shop-image:hover {
+.facility-image:hover {
     transform: scale(1.05);
 }
 
-.shop-image img {
+.facility-image img {
     width: 100%;
     height: 100%;
     object-fit: cover;
 }
 
-.shop-title {
+.facility-title {
     color: #f8b500;
     border-bottom: 2px solid #f8b500;
     padding-bottom: 0.5em;
@@ -255,7 +255,7 @@
         min-height: 200px; 
     }
     
-    .shop-detail-container {
+    .facility-detail-container {
         grid-template-columns: 1fr;
         grid-template-rows: 1fr 300px;
     }
@@ -271,12 +271,12 @@
         padding: 1em;
     }
     
-    .shop-images {
+    .facility-images {
         grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
         max-width: 100%;
     }
     
-    .shop-image {
+    .facility-image {
         max-width: 100px;
         max-height: 100px;
     }

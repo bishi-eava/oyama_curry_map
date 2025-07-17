@@ -45,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['name'])) {
         $db = getDatabase();
         
         // 同じ名前の施設が既に存在するかチェック
-        $stmt = $db->prepare('SELECT COUNT(*) as cnt FROM shops WHERE name = :name');
+        $stmt = $db->prepare('SELECT COUNT(*) as cnt FROM facilities WHERE name = :name');
         $stmt->bindValue(':name', $name, SQLITE3_TEXT);
         $res = $stmt->execute();
         $row = $res->fetchArray(SQLITE3_ASSOC);
@@ -56,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['name'])) {
         } else {
             // 施設を登録（日本時間でupdated_atを設定）
             $japanTime = date('Y-m-d H:i:s', time());
-            $stmt = $db->prepare('INSERT INTO shops (name, lat, lng, address, description, phone, website, business_hours, sns_account, category, review, updated_at) VALUES (:name, :lat, :lng, :address, :description, :phone, :website, :business_hours, :sns_account, :category, :review, :updated_at)');
+            $stmt = $db->prepare('INSERT INTO facilities (name, lat, lng, address, description, phone, website, business_hours, sns_account, category, review, updated_at) VALUES (:name, :lat, :lng, :address, :description, :phone, :website, :business_hours, :sns_account, :category, :review, :updated_at)');
             $stmt->bindValue(':name', $name, SQLITE3_TEXT);
             $stmt->bindValue(':lat', $lat, SQLITE3_FLOAT);
             $stmt->bindValue(':lng', $lng, SQLITE3_FLOAT);
@@ -72,7 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['name'])) {
             $result = $stmt->execute();
             
             if ($result) {
-                $shopId = $db->lastInsertRowID();
+                $facilityId = $db->lastInsertRowID();
                 
                 // 画像ファイルの処理
                 if (isset($_FILES['images']) && $_FILES['images']['error'][0] !== UPLOAD_ERR_NO_FILE) {
@@ -98,13 +98,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['name'])) {
                                     if ($imageInfo !== false) {
                                         // ファイル名生成（重複防止）
                                         $extension = pathinfo($fileName, PATHINFO_EXTENSION);
-                                        $newFileName = $shopId . '_' . uniqid() . '.' . $extension;
+                                        $newFileName = $facilityId . '_' . uniqid() . '.' . $extension;
                                         $filePath = $uploadDir . $newFileName;
                                         
                                         if (move_uploaded_file($fileTmpName, $filePath)) {
                                             // データベースに画像情報を保存
-                                            $stmt = $db->prepare('INSERT INTO shop_images (shop_id, filename, original_name) VALUES (:shop_id, :filename, :original_name)');
-                                            $stmt->bindValue(':shop_id', $shopId, SQLITE3_INTEGER);
+                                            $stmt = $db->prepare('INSERT INTO facility_images (facility_id, filename, original_name) VALUES (:facility_id, :filename, :original_name)');
+                                            $stmt->bindValue(':facility_id', $facilityId, SQLITE3_INTEGER);
                                             $stmt->bindValue(':filename', $newFileName, SQLITE3_TEXT);
                                             $stmt->bindValue(':original_name', $fileName, SQLITE3_TEXT);
                                             $stmt->execute();

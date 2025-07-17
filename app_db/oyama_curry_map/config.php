@@ -10,9 +10,9 @@ if (!defined('CONFIG_ACCESS_ALLOWED')) {
 return [
     // データベース設定
     'database' => [
-        'path' => __DIR__ . '/curry_shops.db',
+        'path' => __DIR__ . '/facilities.db',
         'tables' => [
-            'shops' => [
+            'facilities' => [
                 'columns' => [
                     'id' => 'INTEGER PRIMARY KEY AUTOINCREMENT',
                     'name' => 'TEXT NOT NULL',
@@ -29,28 +29,28 @@ return [
                     'updated_at' => 'DATETIME DEFAULT CURRENT_TIMESTAMP'
                 ],
                 'indexes' => [
-                    'idx_shops_location' => ['lat', 'lng'],
-                    'idx_shops_updated_at' => ['updated_at'],
-                    'idx_shops_category' => ['category']
+                    'idx_facilities_location' => ['lat', 'lng'],
+                    'idx_facilities_updated_at' => ['updated_at'],
+                    'idx_facilities_category' => ['category']
                 ]
             ],
-            'shop_images' => [
+            'facility_images' => [
                 'columns' => [
                     'id' => 'INTEGER PRIMARY KEY AUTOINCREMENT',
-                    'shop_id' => 'INTEGER NOT NULL',
+                    'facility_id' => 'INTEGER NOT NULL',
                     'filename' => 'TEXT NOT NULL',
                     'original_name' => 'TEXT NOT NULL',
                     'created_at' => 'DATETIME DEFAULT CURRENT_TIMESTAMP'
                 ],
                 'foreign_keys' => [
-                    'shop_id' => [
-                        'references' => 'shops(id)',
+                    'facility_id' => [
+                        'references' => 'facilities(id)',
                         'on_delete' => 'CASCADE'
                     ]
                 ],
                 'indexes' => [
-                    'idx_shop_images_shop_id' => ['shop_id'],
-                    'idx_shop_images_created_at' => ['created_at']
+                    'idx_facility_images_facility_id' => ['facility_id'],
+                    'idx_facility_images_created_at' => ['created_at']
                 ]
             ],
             'admin_settings' => [
@@ -67,7 +67,7 @@ return [
                 ]
             ]
         ],
-        'drop_order' => ['shop_images', 'shops', 'admin_settings']
+        'drop_order' => ['facility_images', 'facilities', 'admin_settings']
     ],
     
     // 管理者設定
@@ -114,14 +114,14 @@ return [
     // セキュリティ設定
     'security' => [
         'max_image_size' => 5 * 1024 * 1024,  // 5MB
-        'max_images_per_shop' => 10,
+        'max_images_per_facility' => 10,
         'max_review_length' => 2000
     ],
     
     // ストレージ設定
     'storage' => [
-        'images_dir' => 'shop_images',
-        'database_file' => 'curry_shops.db'
+        'images_dir' => 'facility_images',
+        'database_file' => 'facilities.db'
     ],
     
     // サンプルデータ設定

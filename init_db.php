@@ -10,15 +10,15 @@ checkAuth();
 $config = getConfig();
 
 // シンプルな初期化チェック関数
-function getShopCount($config) {
+function getFacilityCount($config) {
     try {
         $db = new SQLite3($config['database']['path']);
         
         // テーブルの存在確認
-        $tableCheck = $db->query("SELECT name FROM sqlite_master WHERE type='table' AND name='shops'");
+        $tableCheck = $db->query("SELECT name FROM sqlite_master WHERE type='table' AND name='facilities'");
         if ($tableCheck && $tableCheck->fetchArray()) {
             // データ件数確認
-            $result = $db->query("SELECT COUNT(*) as count FROM shops");
+            $result = $db->query("SELECT COUNT(*) as count FROM facilities");
             $row = $result->fetchArray();
             return $row['count'];
         }
@@ -31,9 +31,9 @@ function getShopCount($config) {
     return 0;
 }
 
-// 店舗データの件数を取得
-$shopCount = getShopCount($config);
-$hasData = ($shopCount > 0);
+// 施設データの件数を取得
+$facilityCount = getFacilityCount($config);
+$hasData = ($facilityCount > 0);
 
 // 処理実行部分（POST送信時）
 if (isset($_POST['init_type'])) {
@@ -58,7 +58,7 @@ if (isset($_POST['init_type'])) {
     
     // 処理結果に応じた完了メッセージ（この後に選択画面は表示されない）
     $currentTime = date('Y-m-d H:i:s');
-    $newShopCount = getShopCount($config);
+    $newFacilityCount = getFacilityCount($config);
     
     if ($success) {
         echo "<div style='color: green; font-size: 1.2em; margin: 20px; padding: 20px; border: 2px solid green;'>";
@@ -67,13 +67,13 @@ if (isset($_POST['init_type'])) {
             echo "<h3>✅ データベース構成更新完了</h3>";
             echo "<p>処理日時: " . htmlspecialchars($currentTime) . "</p>";
             echo "<p>処理内容: テーブル構造の更新（データ保持）</p>";
-            echo "<p>店舗データ: {$newShopCount} 件（保持）</p>";
+            echo "<p>施設データ: {$newFacilityCount} 件（保持）</p>";
             echo "<p>既存データを保持したまま、データベース構成を更新しました。</p>";
         } elseif ($initType === 'full_reset') {
             echo "<h3>✅ データベース初期化＆サンプルデータ投入完了</h3>";
             echo "<p>初期化日時: " . htmlspecialchars($currentTime) . "</p>";
             echo "<p>処理内容: 全データ削除 + サンプルデータ投入</p>";
-            echo "<p>店舗データ: {$newShopCount} 件（新規）</p>";
+            echo "<p>施設データ: {$newFacilityCount} 件（新規）</p>";
             echo "<p>データベースを完全にリセットし、サンプルデータで初期化しました。</p>";
         }
         
@@ -82,7 +82,7 @@ if (isset($_POST['init_type'])) {
         // テーブル構造の表示
         if (isset($_SESSION['table_structure'])) {
             echo "<div style='margin-top: 15px; background: #f8f9fa; padding: 10px; border-radius: 5px;'>";
-            echo "<p><strong>📋 shopsテーブル構造:</strong></p>";
+            echo "<p><strong>📋 facilitiesテーブル構造:</strong></p>";
             echo "<ul style='margin: 5px 0; padding-left: 20px;'>";
             foreach ($_SESSION['table_structure'] as $column) {
                 echo "<li>" . htmlspecialchars($column) . "</li>";
@@ -127,7 +127,7 @@ if ($hasData) {
     // データが存在する場合：2つのオプションを提供
     echo "<div style='font-size: 1.2em; margin: 20px; padding: 20px; border: 2px solid #ffc107; background: #fff9c4;'>";
     echo "<h3>⚠️ データベースに既存データがあります</h3>";
-    echo "<p>現在 <strong>{$shopCount} 件</strong> の店舗データが登録されています。</p>";
+    echo "<p>現在 <strong>{$facilityCount} 件</strong> の施設データが登録されています。</p>";
     echo "<p>以下のどちらかを選択してください：</p>";
     echo "</div>";
     
@@ -165,8 +165,8 @@ if ($hasData) {
     echo "<h3>🚀 データベースの初期化を実行します</h3>";
     echo "<p>以下の処理を実行します：</p>";
     echo "<ul>";
-    echo "<li>テーブルの作成（shops, shop_images, admin_settings）</li>";
-    echo "<li>サンプルデータの投入（3件の店舗データ）</li>";
+    echo "<li>テーブルの作成（facilities, facility_images, admin_settings）</li>";
+    echo "<li>サンプルデータの投入（3件の施設データ）</li>";
     echo "</ul>";
     echo "<p>この操作は元に戻すことができません。実行してもよろしいですか？</p>";
     echo "<form method='POST' style='margin-top: 15px;'>";
@@ -299,20 +299,20 @@ function updateDatabaseSchema($config) {
     $db = new SQLite3($config['database']['path']);
     
     // 設定からテーブル構造を取得してテーブル作成
-    $shopsTableSQL = getTableSchema($config, 'shops');
-    $db->exec($shopsTableSQL);
+    $facilitiesTableSQL = getTableSchema($config, 'facilities');
+    $db->exec($facilitiesTableSQL);
     
     // 既存テーブルに新しいカラムを追加（設定ファイルベース）
-    $shopColumns = $config['database']['tables']['shops']['columns'];
+    $facilityColumns = $config['database']['tables']['facilities']['columns'];
     
-    foreach ($shopColumns as $columnName => $columnType) {
+    foreach ($facilityColumns as $columnName => $columnType) {
         // idカラムはスキップ（既存のPRIMARY KEYのため）
         if ($columnName === 'id') {
             continue;
         }
         
         // カラム存在チェック
-        $checkResult = $db->query("PRAGMA table_info(shops)");
+        $checkResult = $db->query("PRAGMA table_info(facilities)");
         $columnExists = false;
         while ($row = $checkResult->fetchArray()) {
             if ($row['name'] === $columnName) {
@@ -324,14 +324,14 @@ function updateDatabaseSchema($config) {
         // カラムが存在しない場合のみ追加
         if (!$columnExists) {
             try {
-                $result = $db->exec("ALTER TABLE shops ADD COLUMN {$columnName} {$columnType}");
+                $result = $db->exec("ALTER TABLE facilities ADD COLUMN {$columnName} {$columnType}");
                 if ($result === false) {
                     error_log("Failed to add column {$columnName}: " . $db->lastErrorMsg());
                 } else {
                     // updated_atカラムを追加した場合、既存レコードに日本時間を設定
                     if ($columnName === 'updated_at') {
                         $japanTime = date('Y-m-d H:i:s', time());
-                        $db->exec("UPDATE shops SET updated_at = '{$japanTime}' WHERE updated_at IS NULL");
+                        $db->exec("UPDATE facilities SET updated_at = '{$japanTime}' WHERE updated_at IS NULL");
                     }
                 }
             } catch (Exception $e) {
@@ -341,20 +341,20 @@ function updateDatabaseSchema($config) {
     }
     
     // 他のテーブルも設定から作成
-    $shopImagesTableSQL = getTableSchema($config, 'shop_images');
-    $db->exec($shopImagesTableSQL);
+    $facilityImagesTableSQL = getTableSchema($config, 'facility_images');
+    $db->exec($facilityImagesTableSQL);
     
     $adminSettingsTableSQL = getTableSchema($config, 'admin_settings');
     $db->exec($adminSettingsTableSQL);
     
     // 全テーブルのインデックスを作成
-    createTableIndexes($config, 'shops', $db);
-    createTableIndexes($config, 'shop_images', $db);
+    createTableIndexes($config, 'facilities', $db);
+    createTableIndexes($config, 'facility_images', $db);
     createTableIndexes($config, 'admin_settings', $db);
     
     // テーブル構造の確認結果を取得
     $tableInfo = [];
-    $result = $db->query("PRAGMA table_info(shops)");
+    $result = $db->query("PRAGMA table_info(facilities)");
     while ($row = $result->fetchArray()) {
         $tableInfo[] = $row['name'] . ' (' . $row['type'] . ')';
     }
@@ -399,20 +399,20 @@ function resetDatabaseWithSampleData($config) {
     }
     
     // サンプルデータ（設定ファイルから取得）
-    $shops = $config['sample_data'];
+    $facilities = $config['sample_data'];
     
-    foreach ($shops as $shop) {
-        $stmt = $db->prepare('INSERT INTO shops (name, lat, lng, address, description, phone, website, business_hours, sns_account, category) VALUES (:name, :lat, :lng, :address, :description, :phone, :website, :business_hours, :sns_account, :category)');
-        $stmt->bindValue(':name', $shop['name'], SQLITE3_TEXT);
-        $stmt->bindValue(':lat', $shop['lat'], SQLITE3_FLOAT);
-        $stmt->bindValue(':lng', $shop['lng'], SQLITE3_FLOAT);
-        $stmt->bindValue(':address', $shop['address'], SQLITE3_TEXT);
-        $stmt->bindValue(':description', $shop['description'], SQLITE3_TEXT);
-        $stmt->bindValue(':phone', $shop['phone'], SQLITE3_TEXT);
-        $stmt->bindValue(':website', $shop['website'], SQLITE3_TEXT);
-        $stmt->bindValue(':business_hours', $shop['business_hours'], SQLITE3_TEXT);
-        $stmt->bindValue(':sns_account', $shop['sns_account'], SQLITE3_TEXT);
-        $stmt->bindValue(':category', $shop['category'], SQLITE3_TEXT);
+    foreach ($facilities as $facility) {
+        $stmt = $db->prepare('INSERT INTO facilities (name, lat, lng, address, description, phone, website, business_hours, sns_account, category) VALUES (:name, :lat, :lng, :address, :description, :phone, :website, :business_hours, :sns_account, :category)');
+        $stmt->bindValue(':name', $facility['name'], SQLITE3_TEXT);
+        $stmt->bindValue(':lat', $facility['lat'], SQLITE3_FLOAT);
+        $stmt->bindValue(':lng', $facility['lng'], SQLITE3_FLOAT);
+        $stmt->bindValue(':address', $facility['address'], SQLITE3_TEXT);
+        $stmt->bindValue(':description', $facility['description'], SQLITE3_TEXT);
+        $stmt->bindValue(':phone', $facility['phone'], SQLITE3_TEXT);
+        $stmt->bindValue(':website', $facility['website'], SQLITE3_TEXT);
+        $stmt->bindValue(':business_hours', $facility['business_hours'], SQLITE3_TEXT);
+        $stmt->bindValue(':sns_account', $facility['sns_account'], SQLITE3_TEXT);
+        $stmt->bindValue(':category', $facility['category'], SQLITE3_TEXT);
         $stmt->execute();
     }
     

@@ -12,12 +12,12 @@ if (isset($_GET['logout'])) {
 
 $message = '';
 $messageType = '';
-$shop = null;
+$facility = null;
 $images = [];
 
 // 施設IDの取得
-$shopId = isset($_GET['id']) ? intval($_GET['id']) : 0;
-if (!$shopId) {
+$facilityId = isset($_GET['id']) ? intval($_GET['id']) : 0;
+if (!$facilityId) {
     header('Location: admin.php');
     exit;
 }
@@ -25,19 +25,19 @@ if (!$shopId) {
 $db = getDatabase();
 
 // 施設情報の取得
-$stmt = $db->prepare('SELECT * FROM shops WHERE id = :id');
-$stmt->bindValue(':id', $shopId, SQLITE3_INTEGER);
+$stmt = $db->prepare('SELECT * FROM facilities WHERE id = :id');
+$stmt->bindValue(':id', $facilityId, SQLITE3_INTEGER);
 $res = $stmt->execute();
-$shop = $res->fetchArray(SQLITE3_ASSOC);
+$facility = $res->fetchArray(SQLITE3_ASSOC);
 
-if (!$shop) {
+if (!$facility) {
     header('Location: admin.php');
     exit;
 }
 
 // 既存画像の取得
-$stmt = $db->prepare('SELECT id, filename, original_name FROM shop_images WHERE shop_id = :shop_id ORDER BY id');
-$stmt->bindValue(':shop_id', $shopId, SQLITE3_INTEGER);
+$stmt = $db->prepare('SELECT id, filename, original_name FROM facility_images WHERE facility_id = :facility_id ORDER BY id');
+$stmt->bindValue(':facility_id', $facilityId, SQLITE3_INTEGER);
 $res = $stmt->execute();
 while ($row = $res->fetchArray(SQLITE3_ASSOC)) {
     $images[] = $row;
@@ -73,9 +73,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['name'])) {
         
         if (!empty($name) && $lat && $lng && !empty($category)) {
             // 同じ名前の施設が既に存在するかチェック（自分以外）
-            $stmt = $db->prepare('SELECT COUNT(*) as cnt FROM shops WHERE name = :name AND id != :id');
+            $stmt = $db->prepare('SELECT COUNT(*) as cnt FROM facilities WHERE name = :name AND id != :id');
             $stmt->bindValue(':name', $name, SQLITE3_TEXT);
-            $stmt->bindValue(':id', $shopId, SQLITE3_INTEGER);
+            $stmt->bindValue(':id', $facilityId, SQLITE3_INTEGER);
             $res = $stmt->execute();
             $row = $res->fetchArray(SQLITE3_ASSOC);
             
@@ -85,7 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['name'])) {
             } else {
                 // 施設情報を更新（日本時間でupdated_atを設定）
                 $japanTime = date('Y-m-d H:i:s', time());
-                $stmt = $db->prepare('UPDATE shops SET name = :name, lat = :lat, lng = :lng, address = :address, description = :description, phone = :phone, website = :website, business_hours = :business_hours, sns_account = :sns_account, category = :category, review = :review, updated_at = :updated_at WHERE id = :id');
+                $stmt = $db->prepare('UPDATE facilities SET name = :name, lat = :lat, lng = :lng, address = :address, description = :description, phone = :phone, website = :website, business_hours = :business_hours, sns_account = :sns_account, category = :category, review = :review, updated_at = :updated_at WHERE id = :id');
                 $stmt->bindValue(':name', $name, SQLITE3_TEXT);
                 $stmt->bindValue(':lat', $lat, SQLITE3_FLOAT);
                 $stmt->bindValue(':lng', $lng, SQLITE3_FLOAT);
@@ -98,7 +98,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['name'])) {
                 $stmt->bindValue(':category', $category, SQLITE3_TEXT);
                 $stmt->bindValue(':review', $review, SQLITE3_TEXT);
                 $stmt->bindValue(':updated_at', $japanTime, SQLITE3_TEXT);
-                $stmt->bindValue(':id', $shopId, SQLITE3_INTEGER);
+                $stmt->bindValue(':id', $facilityId, SQLITE3_INTEGER);
                 $result = $stmt->execute();
                 
                 if ($result) {
@@ -128,13 +128,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['name'])) {
                                         if ($imageInfo !== false) {
                                             // ファイル名生成（重複防止）
                                             $extension = pathinfo($fileName, PATHINFO_EXTENSION);
-                                            $newFileName = $shopId . '_' . uniqid() . '.' . $extension;
+                                            $newFileName = $facilityId . '_' . uniqid() . '.' . $extension;
                                             $filePath = $uploadDir . $newFileName;
                                             
                                             if (move_uploaded_file($fileTmpName, $filePath)) {
                                                 // データベースに画像情報を保存
-                                                $stmt = $db->prepare('INSERT INTO shop_images (shop_id, filename, original_name) VALUES (:shop_id, :filename, :original_name)');
-                                                $stmt->bindValue(':shop_id', $shopId, SQLITE3_INTEGER);
+                                                $stmt = $db->prepare('INSERT INTO facility_images (facility_id, filename, original_name) VALUES (:facility_id, :filename, :original_name)');
+                                                $stmt->bindValue(':facility_id', $facilityId, SQLITE3_INTEGER);
                                                 $stmt->bindValue(':filename', $newFileName, SQLITE3_TEXT);
                                                 $stmt->bindValue(':original_name', $fileName, SQLITE3_TEXT);
                                                 $stmt->execute();
@@ -154,15 +154,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['name'])) {
                         $messageType = 'success';
                         
                         // 更新後のデータを再取得
-                        $stmt = $db->prepare('SELECT * FROM shops WHERE id = :id');
-                        $stmt->bindValue(':id', $shopId, SQLITE3_INTEGER);
+                        $stmt = $db->prepare('SELECT * FROM facilities WHERE id = :id');
+                        $stmt->bindValue(':id', $facilityId, SQLITE3_INTEGER);
                         $res = $stmt->execute();
-                        $shop = $res->fetchArray(SQLITE3_ASSOC);
+                        $facility = $res->fetchArray(SQLITE3_ASSOC);
                         
                         // 画像も再取得
                         $images = [];
-                        $stmt = $db->prepare('SELECT id, filename, original_name FROM shop_images WHERE shop_id = :shop_id ORDER BY id');
-                        $stmt->bindValue(':shop_id', $shopId, SQLITE3_INTEGER);
+                        $stmt = $db->prepare('SELECT id, filename, original_name FROM facility_images WHERE facility_id = :facility_id ORDER BY id');
+                        $stmt->bindValue(':facility_id', $facilityId, SQLITE3_INTEGER);
                         $res = $stmt->execute();
                         while ($row = $res->fetchArray(SQLITE3_ASSOC)) {
                             $images[] = $row;
@@ -185,9 +185,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['name'])) {
 if (isset($_GET['delete_image'])) {
     $imageId = intval($_GET['delete_image']);
     
-    $stmt = $db->prepare('SELECT filename FROM shop_images WHERE id = :id AND shop_id = :shop_id');
+    $stmt = $db->prepare('SELECT filename FROM facility_images WHERE id = :id AND facility_id = :facility_id');
     $stmt->bindValue(':id', $imageId, SQLITE3_INTEGER);
-    $stmt->bindValue(':shop_id', $shopId, SQLITE3_INTEGER);
+    $stmt->bindValue(':facility_id', $facilityId, SQLITE3_INTEGER);
     $res = $stmt->execute();
     $imageRow = $res->fetchArray(SQLITE3_ASSOC);
     
@@ -199,12 +199,12 @@ if (isset($_GET['delete_image'])) {
         }
         
         // データベースから削除
-        $db->exec("DELETE FROM shop_images WHERE id = $imageId");
+        $db->exec("DELETE FROM facility_images WHERE id = $imageId");
         
         // 画像リストを再取得
         $images = [];
-        $stmt = $db->prepare('SELECT id, filename, original_name FROM shop_images WHERE shop_id = :shop_id ORDER BY id');
-        $stmt->bindValue(':shop_id', $shopId, SQLITE3_INTEGER);
+        $stmt = $db->prepare('SELECT id, filename, original_name FROM facility_images WHERE facility_id = :facility_id ORDER BY id');
+        $stmt->bindValue(':facility_id', $facilityId, SQLITE3_INTEGER);
         $res = $stmt->execute();
         while ($row = $res->fetchArray(SQLITE3_ASSOC)) {
             $images[] = $row;
@@ -227,7 +227,7 @@ if (isset($_GET['delete_image'])) {
 </head>
 <body>
     <div class="header">
-        <h1><?= htmlspecialchars($config['app']['facility_name']) ?>編集: <?= htmlspecialchars($shop['name']) ?></h1>
+        <h1><?= htmlspecialchars($config['app']['facility_name']) ?>編集: <?= htmlspecialchars($facility['name']) ?></h1>
         <div>
             <a href="admin.php">管理画面</a>
             <a href="?logout=1">ログアウト</a>
@@ -243,15 +243,15 @@ if (isset($_GET['delete_image'])) {
             <form method="POST" enctype="multipart/form-data">
                 <div class="coord-info">
                     <strong>座標情報:</strong><br>
-                    緯度: <span id="currentLat"><?= htmlspecialchars($shop['lat']) ?></span><br>
-                    経度: <span id="currentLng"><?= htmlspecialchars($shop['lng']) ?></span><br>
+                    緯度: <span id="currentLat"><?= htmlspecialchars($facility['lat']) ?></span><br>
+                    経度: <span id="currentLng"><?= htmlspecialchars($facility['lng']) ?></span><br>
                     <button type="button" id="getCurrentLocationBtn" style="margin-top:0.5em; padding:0.5em 1em; font-size:0.9em;">現在位置に移動</button><br>
                     <small>※地図をクリックまたはドラッグして位置を調整してください</small>
                 </div>
                 
                 <div class="form-group">
                     <label for="name"><?= htmlspecialchars($config['app']['field_labels']['name']) ?> *</label>
-                    <input type="text" id="name" name="name" required value="<?= htmlspecialchars($shop['name']) ?>">
+                    <input type="text" id="name" name="name" required value="<?= htmlspecialchars($facility['name']) ?>">
                 </div>
                 
                 <div class="form-group">
@@ -259,20 +259,20 @@ if (isset($_GET['delete_image'])) {
                     <select id="category" name="category" required>
                         <option value="">カテゴリーを選択してください</option>
                         <?php foreach ($config['app']['categories'] as $category): ?>
-                            <option value="<?= htmlspecialchars($category) ?>" <?= ($shop['category'] === $category) ? 'selected' : '' ?>><?= htmlspecialchars($category) ?></option>
+                            <option value="<?= htmlspecialchars($category) ?>" <?= ($facility['category'] === $category) ? 'selected' : '' ?>><?= htmlspecialchars($category) ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
                 
                 <div class="form-group">
                     <label for="address"><?= htmlspecialchars($config['app']['field_labels']['address']) ?></label>
-                    <input type="text" id="address" name="address" value="<?= htmlspecialchars($shop['address']) ?>">
+                    <input type="text" id="address" name="address" value="<?= htmlspecialchars($facility['address']) ?>">
                     <button type="button" id="getAddressBtn" style="margin-top:0.5em; padding:0.5em 1em; font-size:0.9em;">マーカー位置の住所を取得</button>
                 </div>
                 
                 <div class="form-group">
                     <label for="description"><?= htmlspecialchars($config['app']['field_labels']['description']) ?>（最大2000文字）</label>
-                    <textarea id="description" name="description" rows="3" maxlength="2000" placeholder="施設の簡単な説明を入力してください"><?= htmlspecialchars($shop['description'] ?? '') ?></textarea>
+                    <textarea id="description" name="description" rows="3" maxlength="2000" placeholder="施設の簡単な説明を入力してください"><?= htmlspecialchars($facility['description'] ?? '') ?></textarea>
                     <div style="font-size:0.8em; color:#666; text-align:right; margin-top:0.3em;">
                         <span id="descriptionCount">0</span>/2000文字
                     </div>
@@ -280,27 +280,27 @@ if (isset($_GET['delete_image'])) {
                 
                 <div class="form-group">
                     <label for="phone"><?= htmlspecialchars($config['app']['field_labels']['phone']) ?></label>
-                    <input type="tel" id="phone" name="phone" value="<?= htmlspecialchars($shop['phone'] ?? '') ?>" placeholder="03-1234-5678">
+                    <input type="tel" id="phone" name="phone" value="<?= htmlspecialchars($facility['phone'] ?? '') ?>" placeholder="03-1234-5678">
                 </div>
                 
                 <div class="form-group">
                     <label for="website"><?= htmlspecialchars($config['app']['field_labels']['website']) ?></label>
-                    <input type="url" id="website" name="website" value="<?= htmlspecialchars($shop['website'] ?? '') ?>" placeholder="https://example.com">
+                    <input type="url" id="website" name="website" value="<?= htmlspecialchars($facility['website'] ?? '') ?>" placeholder="https://example.com">
                 </div>
                 
                 <div class="form-group">
                     <label for="business_hours"><?= htmlspecialchars($config['app']['field_labels']['business_hours']) ?></label>
-                    <input type="text" id="business_hours" name="business_hours" value="<?= htmlspecialchars($shop['business_hours'] ?? '') ?>" placeholder="11:00-21:00">
+                    <input type="text" id="business_hours" name="business_hours" value="<?= htmlspecialchars($facility['business_hours'] ?? '') ?>" placeholder="11:00-21:00">
                 </div>
                 
                 <div class="form-group">
                     <label for="sns_account"><?= htmlspecialchars($config['app']['field_labels']['sns_account']) ?></label>
-                    <input type="text" id="sns_account" name="sns_account" value="<?= htmlspecialchars($shop['sns_account'] ?? '') ?>" placeholder="@example_account">
+                    <input type="text" id="sns_account" name="sns_account" value="<?= htmlspecialchars($facility['sns_account'] ?? '') ?>" placeholder="@example_account">
                 </div>
                 
                 <div class="form-group">
                     <label for="review"><?= htmlspecialchars($config['app']['field_labels']['review']) ?>（最大2000文字）</label>
-                    <textarea id="review" name="review" rows="5" maxlength="2000" placeholder="<?= htmlspecialchars($config['app']['facility_name']) ?>の特徴、雰囲気、おすすめメニューなどを詳しく記入してください..."><?= htmlspecialchars($shop['review'] ?? '') ?></textarea>
+                    <textarea id="review" name="review" rows="5" maxlength="2000" placeholder="<?= htmlspecialchars($config['app']['facility_name']) ?>の特徴、雰囲気、おすすめメニューなどを詳しく記入してください..."><?= htmlspecialchars($facility['review'] ?? '') ?></textarea>
                     <div style="font-size:0.8em; color:#666; text-align:right; margin-top:0.3em;">
                         <span id="reviewCount">0</span>/2000文字
                     </div>
@@ -330,8 +330,8 @@ if (isset($_GET['delete_image'])) {
                     <div id="newImagePreview"></div>
                 </div>
                 
-                <input type="hidden" id="lat" name="lat" value="<?= htmlspecialchars($shop['lat']) ?>">
-                <input type="hidden" id="lng" name="lng" value="<?= htmlspecialchars($shop['lng']) ?>">
+                <input type="hidden" id="lat" name="lat" value="<?= htmlspecialchars($facility['lat']) ?>">
+                <input type="hidden" id="lng" name="lng" value="<?= htmlspecialchars($facility['lng']) ?>">
                 <input type="hidden" name="csrf_token" value="<?= generateCSRFToken() ?>">
                 
                 <button type="submit">更新</button>
@@ -347,8 +347,8 @@ if (isset($_GET['delete_image'])) {
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script>
         // 地図初期化
-        const initialLat = <?= $shop['lat'] ?>;
-        const initialLng = <?= $shop['lng'] ?>;
+        const initialLat = <?= $facility['lat'] ?>;
+        const initialLng = <?= $facility['lng'] ?>;
         const map = L.map('map').setView([initialLat, initialLng], 15);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; OpenStreetMap contributors'
@@ -406,7 +406,7 @@ if (isset($_GET['delete_image'])) {
         // 画像削除
         function deleteImage(imageId) {
             if (confirm('この' + <?= json_encode($config['app']['field_labels']['images']) ?> + 'を削除しますか？')) {
-                location.href = '?id=<?= $shopId ?>&delete_image=' + imageId;
+                location.href = '?id=<?= $facilityId ?>&delete_image=' + imageId;
             }
         }
         

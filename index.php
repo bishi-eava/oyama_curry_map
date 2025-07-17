@@ -94,7 +94,7 @@ $appName = $config['app']['name'];
     };
 
     // グローバル変数
-    let allShops = [];
+    let allFacilities = [];
     let markersLayer = L.layerGroup();
     
     // カテゴリーごとのマーカー色を定義
@@ -122,90 +122,90 @@ $appName = $config['app']['name'];
     }
     
     // 施設情報をAPIから取得してマーカー表示
-    function loadShops() {
-      fetch('api_shops.php')
+    function loadFacilities() {
+      fetch('api_facilities.php')
         .then(res => res.json())
         .then(data => {
-          allShops = data;
-          displayShops(data);
+          allFacilities = data;
+          displayFacilities(data);
         });
     }
     
-    // 店舗データを地図に表示する関数
-    function displayShops(shops) {
+    // 施設データを地図に表示する関数
+    function displayFacilities(facilities) {
       // 既存のマーカーをクリア
       markersLayer.clearLayers();
       
-      shops.forEach(shop => {
+      facilities.forEach(facility => {
             // ポップアップ内容を構築
-            let popupContent = `<b>${shop.name}</b>`;
+            let popupContent = `<b>${facility.name}</b>`;
             
             // カテゴリーがあれば表示
-            if (shop.category && shop.category.trim() !== '') {
-              const categoryColor = categoryColors[shop.category] || '<?= end($config['app']['categories']) === 'その他' ? '#e53935' : '#666666' ?>';
-              popupContent += `<br><span style="background:${categoryColor}; color:#fff; padding:0.2em 0.5em; border-radius:3px; font-size:0.8em;">${shop.category}</span>`;
+            if (facility.category && facility.category.trim() !== '') {
+              const categoryColor = categoryColors[facility.category] || '<?= end($config['app']['categories']) === 'その他' ? '#e53935' : '#666666' ?>';
+              popupContent += `<br><span style="background:${categoryColor}; color:#fff; padding:0.2em 0.5em; border-radius:3px; font-size:0.8em;">${facility.category}</span>`;
             }
             
             // 説明があれば表示
-            if (shop.description && shop.description.trim() !== '') {
-              popupContent += `<br><i>${shop.description}</i>`;
+            if (facility.description && facility.description.trim() !== '') {
+              popupContent += `<br><i>${facility.description}</i>`;
             }
             
             // 住所があれば表示
-            if (shop.address && shop.address.trim() !== '') {
-              popupContent += `<br>📍 ${shop.address}`;
+            if (facility.address && facility.address.trim() !== '') {
+              popupContent += `<br>📍 ${facility.address}`;
             }
             
             // 電話番号があれば表示
-            if (shop.phone && shop.phone.trim() !== '') {
-              popupContent += `<br>📞 <a href="tel:${shop.phone}">${shop.phone}</a>`;
+            if (facility.phone && facility.phone.trim() !== '') {
+              popupContent += `<br>📞 <a href="tel:${facility.phone}">${facility.phone}</a>`;
             }
             
             // 営業時間があれば表示
-            if (shop.business_hours && shop.business_hours.trim() !== '') {
-              popupContent += `<br>⏰ ${shop.business_hours}`;
+            if (facility.business_hours && facility.business_hours.trim() !== '') {
+              popupContent += `<br>⏰ ${facility.business_hours}`;
             }
             
             // ウェブサイトがあれば表示
-            if (shop.website && shop.website.trim() !== '') {
-              popupContent += `<br>🌐 <a href="${shop.website}" target="_blank">ウェブサイト</a>`;
+            if (facility.website && facility.website.trim() !== '') {
+              popupContent += `<br>🌐 <a href="${facility.website}" target="_blank">ウェブサイト</a>`;
             }
             
             // SNSアカウントがあれば表示
-            if (shop.sns_account && shop.sns_account.trim() !== '') {
-              const snsAccount = shop.sns_account.trim();
+            if (facility.sns_account && facility.sns_account.trim() !== '') {
+              const snsAccount = facility.sns_account.trim();
               
               // 完全URLまたは@形式のみリンクとして処理
               if (snsAccount.startsWith('http')) {
                 // 完全URL
-                popupContent += `<br>📱 <a href="${snsAccount}" target="_blank">${shop.sns_account}</a>`;
+                popupContent += `<br>📱 <a href="${snsAccount}" target="_blank">${facility.sns_account}</a>`;
               } else if (snsAccount.startsWith('@')) {
                 // Twitter @形式
                 const username = snsAccount.substring(1);
                 const snsLink = `https://twitter.com/${username}`;
-                popupContent += `<br>📱 <a href="${snsLink}" target="_blank">${shop.sns_account}</a>`;
+                popupContent += `<br>📱 <a href="${snsLink}" target="_blank">${facility.sns_account}</a>`;
               } else {
                 // その他はリンクなしで表示
-                popupContent += `<br>📱 ${shop.sns_account}`;
+                popupContent += `<br>📱 ${facility.sns_account}`;
               }
             }
             
             // レビューがあれば表示
-            if (shop.review && shop.review.trim() !== '') {
-              const reviewText = shop.review.length > 150 ? shop.review.substring(0, 150) + '...' : shop.review;
+            if (facility.review && facility.review.trim() !== '') {
+              const reviewText = facility.review.length > 150 ? facility.review.substring(0, 150) + '...' : facility.review;
               popupContent += `<br><div style="margin-top:0.5em; padding:0.5em; background:#f8f9fa; border-radius:3px; font-size:0.9em;">${reviewText.replace(/\n/g, '<br>')}</div>`;
             }
             
             // 画像があれば表示
-            if (shop.images && shop.images.length > 0) {
+            if (facility.images && facility.images.length > 0) {
               popupContent += '<br><div style="margin-top:0.5em;">';
-              shop.images.forEach((image, index) => {
+              facility.images.forEach((image, index) => {
                 if (index < 3) { // 最初の3枚のみ表示
                   popupContent += `<img src="${image.url}" style="width:60px;height:60px;object-fit:cover;margin:2px;border-radius:3px;" onclick="showImageModal('${image.url}', '${image.original_name}')">`;
                 }
               });
-              if (shop.images.length > 3) {
-                popupContent += `<span style="font-size:0.8em;color:#666;">他${shop.images.length - 3}枚</span>`;
+              if (facility.images.length > 3) {
+                popupContent += `<span style="font-size:0.8em;color:#666;">他${facility.images.length - 3}枚</span>`;
               }
               popupContent += '</div>';
             }
@@ -213,14 +213,14 @@ $appName = $config['app']['name'];
             // 詳細を見るボタンを追加
             const facilityName = <?= json_encode($config['app']['facility_name']) ?>;
             popupContent += `<br><div style="margin-top:1em; text-align:center;">
-              <a href="shop_detail.php?id=${shop.id}" style="display:inline-block; padding:0.5em 1em; background:#f8b500; color:#fff; text-decoration:none; border-radius:4px; font-size:0.9em;">${facilityName}詳細を見る</a>
+              <a href="facility_detail.php?id=${facility.id}" style="display:inline-block; padding:0.5em 1em; background:#f8b500; color:#fff; text-decoration:none; border-radius:4px; font-size:0.9em;">${facilityName}詳細を見る</a>
             </div>`;
             
             // カテゴリーに応じたマーカーアイコンを取得
-            const markerIcon = getMarkerIcon(shop.category);
+            const markerIcon = getMarkerIcon(facility.category);
             
             // マーカーを作成してmarkersLayerに追加
-            const marker = L.marker([shop.lat, shop.lng], {icon: markerIcon})
+            const marker = L.marker([facility.lat, facility.lng], {icon: markerIcon})
               .bindPopup(popupContent);
             markersLayer.addLayer(marker);
           });
@@ -233,7 +233,7 @@ $appName = $config['app']['name'];
       if (typeof map === 'undefined') {
         setTimeout(waitMapAndLoad, 200);
       } else {
-        loadShops();
+        loadFacilities();
       }
     }
     waitMapAndLoad();
@@ -284,13 +284,13 @@ $appName = $config['app']['name'];
       
       // 選択されたカテゴリーの店舗のみをフィルター
       const lastCategory = <?= json_encode(end($config['app']['categories'])) ?>;
-      const filteredShops = allShops.filter(shop => {
-        return selectedCategories.includes(shop.category) || 
-               (!shop.category && selectedCategories.includes(lastCategory));
+      const filteredFacilities = allFacilities.filter(facility => {
+        return selectedCategories.includes(facility.category) || 
+               (!facility.category && selectedCategories.includes(lastCategory));
       });
       
       // フィルターされた店舗を表示
-      displayShops(filteredShops);
+      displayFacilities(filteredFacilities);
     }
     
     // 全選択ボタン
