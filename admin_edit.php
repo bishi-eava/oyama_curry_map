@@ -250,7 +250,7 @@ if (isset($_GET['delete_image'])) {
                 </div>
                 
                 <div class="form-group">
-                    <label for="name"><?= htmlspecialchars($config['app']['facility_name']) ?>名 *</label>
+                    <label for="name"><?= htmlspecialchars($config['app']['field_labels']['name']) ?> *</label>
                     <input type="text" id="name" name="name" required value="<?= htmlspecialchars($shop['name']) ?>">
                 </div>
                 
