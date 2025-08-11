@@ -1,0 +1,19 @@
+# 施設画像
+facility_images/
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+.claude/
+.github/
+
+# 動作環境
+cookies.txt
+facilities.db-shm
+facilities.db-wal
+
+# その他
+CLAUDE.md
