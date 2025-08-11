@@ -112,12 +112,6 @@ if (isset($_GET['delete_image'])) {
                 </div>
                 
                 <div class="form-group">
-                    <label for="name_kana"><?= htmlspecialchars($config['app']['field_labels']['name_kana']) ?></label>
-                    <input type="text" id="name_kana" name="name_kana" value="<?= htmlspecialchars($facility['name_kana'] ?? '') ?>">
-                </div>
-                
-                
-                <div class="form-group">
                     <label for="category"><?= htmlspecialchars($config['app']['field_labels']['category']) ?> *</label>
                     <select id="category" name="category" required>
                         <option value="">カテゴリーを選択してください</option>
@@ -129,70 +123,31 @@ if (isset($_GET['delete_image'])) {
                 
                 <div class="form-group">
                     <label for="address"><?= htmlspecialchars($config['app']['field_labels']['address']) ?></label>
-                    <input type="text" id="address" name="address" value="<?= htmlspecialchars($facility['address']) ?>">
+                    <input type="text" id="address" name="address" value="<?= htmlspecialchars($facility['address'] ?? '') ?>">
                     <button type="button" id="getAddressBtn" style="margin-top:0.5em; padding:0.5em 1em; font-size:0.9em;">マーカー位置の住所を取得</button>
                 </div>
                 
                 <div class="form-group">
-                    <label for="address_detail"><?= htmlspecialchars($config['app']['field_labels']['address_detail']) ?></label>
-                    <input type="text" id="address_detail" name="address_detail" value="<?= htmlspecialchars($facility['address_detail'] ?? '') ?>">
-                </div>
-                
-                <div class="form-group">
-                    <label for="installation_position"><?= htmlspecialchars($config['app']['field_labels']['installation_position']) ?></label>
-                    <input type="text" id="installation_position" name="installation_position" value="<?= htmlspecialchars($facility['installation_position'] ?? '') ?>">
+                    <label for="description"><?= htmlspecialchars($config['app']['field_labels']['description']) ?></label>
+                    <textarea id="description" name="description" rows="3" maxlength="500" placeholder="店舗の特徴や雰囲気などを記入してください..."><?= htmlspecialchars($facility['description'] ?? '') ?></textarea>
+                    <div style="font-size:0.8em; color:#666; text-align:right; margin-top:0.3em;">
+                        <span id="descriptionCount">0</span>/500文字
+                    </div>
                 </div>
                 
                 <div class="form-group">
                     <label for="phone"><?= htmlspecialchars($config['app']['field_labels']['phone']) ?></label>
-                    <input type="tel" id="phone" name="phone" value="<?= htmlspecialchars($facility['phone'] ?? '') ?>" placeholder="(0285)23-1111">
+                    <input type="tel" id="phone" name="phone" value="<?= htmlspecialchars($facility['phone'] ?? '') ?>" placeholder="0285-20-1234">
                 </div>
                 
                 <div class="form-group">
-                    <label for="phone_extension"><?= htmlspecialchars($config['app']['field_labels']['phone_extension']) ?></label>
-                    <input type="text" id="phone_extension" name="phone_extension" value="<?= htmlspecialchars($facility['phone_extension'] ?? '') ?>">
+                    <label for="business_hours"><?= htmlspecialchars($config['app']['field_labels']['business_hours']) ?></label>
+                    <input type="text" id="business_hours" name="business_hours" value="<?= htmlspecialchars($facility['business_hours'] ?? '') ?>" placeholder="11:00-22:00">
                 </div>
                 
                 <div class="form-group">
-                    <label for="organization_name"><?= htmlspecialchars($config['app']['field_labels']['organization_name']) ?></label>
-                    <input type="text" id="organization_name" name="organization_name" value="<?= htmlspecialchars($facility['organization_name'] ?? '') ?>">
-                </div>
-                
-                <div class="form-group">
-                    <label for="available_days"><?= htmlspecialchars($config['app']['field_labels']['available_days']) ?></label>
-                    <input type="text" id="available_days" name="available_days" value="<?= htmlspecialchars($facility['available_days'] ?? '') ?>" placeholder="月火水木金">
-                </div>
-                
-                <div class="form-group">
-                    <label for="start_time"><?= htmlspecialchars($config['app']['field_labels']['start_time']) ?></label>
-                    <input type="time" id="start_time" name="start_time" value="<?= htmlspecialchars(formatTimeForInput($facility['start_time'] ?? '')) ?>">
-                </div>
-                
-                <div class="form-group">
-                    <label for="end_time"><?= htmlspecialchars($config['app']['field_labels']['end_time']) ?></label>
-                    <input type="time" id="end_time" name="end_time" value="<?= htmlspecialchars(formatTimeForInput($facility['end_time'] ?? '')) ?>">
-                </div>
-                
-                <div class="form-group">
-                    <label for="available_hours_note"><?= htmlspecialchars($config['app']['field_labels']['available_hours_note']) ?></label>
-                    <textarea id="available_hours_note" name="available_hours_note" rows="2" maxlength="500" placeholder="祝日、年末年始を除く。"><?= htmlspecialchars($facility['available_hours_note'] ?? '') ?></textarea>
-                </div>
-                
-                <div class="form-group">
-                    <label for="pediatric_support"><?= htmlspecialchars($config['app']['field_labels']['pediatric_support']) ?></label>
-                    
-                    <?php
-                    // 値を正規化：null、空文字、空白を「無」に変換
-                    $pediatric_value = trim($facility['pediatric_support'] ?? '');
-                    if ($pediatric_value === '' || $pediatric_value === null) {
-                        $pediatric_value = '無';
-                    }
-                    ?>
-                    
-                    <select id="pediatric_support" name="pediatric_support">
-                        <option value="有" <?= ($pediatric_value === '有') ? 'selected' : '' ?>>有</option>
-                        <option value="無" <?= ($pediatric_value === '無') ? 'selected' : '' ?>>無</option>
-                    </select>
+                    <label for="sns_account"><?= htmlspecialchars($config['app']['field_labels']['sns_account']) ?></label>
+                    <input type="text" id="sns_account" name="sns_account" value="<?= htmlspecialchars($facility['sns_account'] ?? '') ?>" placeholder="@username">
                 </div>
                 
                 <div class="form-group">
@@ -201,10 +156,10 @@ if (isset($_GET['delete_image'])) {
                 </div>
                 
                 <div class="form-group">
-                    <label for="note"><?= htmlspecialchars($config['app']['field_labels']['note']) ?>（最大1000文字）</label>
-                    <textarea id="note" name="note" rows="5" maxlength="1000" placeholder="備考情報や注意事項などを記入してください..."><?= htmlspecialchars($facility['note'] ?? '') ?></textarea>
+                    <label for="review"><?= htmlspecialchars($config['app']['field_labels']['review']) ?>（最大2000文字）</label>
+                    <textarea id="review" name="review" rows="5" maxlength="2000" placeholder="店舗のレビューや詳細情報を記入してください..."><?= htmlspecialchars($facility['review'] ?? '') ?></textarea>
                     <div style="font-size:0.8em; color:#666; text-align:right; margin-top:0.3em;">
-                        <span id="noteCount">0</span>/1000文字
+                        <span id="reviewCount">0</span>/2000文字
                     </div>
                 </div>
                 
@@ -344,15 +299,27 @@ if (isset($_GET['delete_image'])) {
             }
         };
         
-        // ノート文字数カウント
-        document.getElementById('note').addEventListener('input', function() {
+        // レビュー文字数カウント
+        document.getElementById('review').addEventListener('input', function() {
             const count = this.value.length;
-            document.getElementById('noteCount').textContent = count;
+            document.getElementById('reviewCount').textContent = count;
             
-            if (count > 1000) {
-                document.getElementById('noteCount').style.color = 'red';
+            if (count > 2000) {
+                document.getElementById('reviewCount').style.color = 'red';
             } else {
-                document.getElementById('noteCount').style.color = '#666';
+                document.getElementById('reviewCount').style.color = '#666';
+            }
+        });
+        
+        // 説明文字数カウント
+        document.getElementById('description').addEventListener('input', function() {
+            const count = this.value.length;
+            document.getElementById('descriptionCount').textContent = count;
+            
+            if (count > 500) {
+                document.getElementById('descriptionCount').style.color = 'red';
+            } else {
+                document.getElementById('descriptionCount').style.color = '#666';
             }
         });
         
@@ -393,9 +360,14 @@ if (isset($_GET['delete_image'])) {
         
         // 初期表示時の文字数カウント
         window.onload = function() {
-            const note = document.getElementById('note');
-            if (note.value) {
-                document.getElementById('noteCount').textContent = note.value.length;
+            const review = document.getElementById('review');
+            if (review.value) {
+                document.getElementById('reviewCount').textContent = review.value.length;
+            }
+            
+            const description = document.getElementById('description');
+            if (description.value) {
+                document.getElementById('descriptionCount').textContent = description.value.length;
             }
         };
     </script>

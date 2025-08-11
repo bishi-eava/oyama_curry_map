@@ -5,18 +5,6 @@
 // auth_check.phpの関数を使用
 require_once 'auth_check.php';
 
-// 時刻をHTML time input用にフォーマットする関数
-function formatTimeForInput($time) {
-    if (empty($time)) return '';
-    // 既に HH:MM 形式の場合はそのまま返す
-    if (preg_match('/^\d{2}:\d{2}$/', $time)) return $time;
-    // H:MM 形式を HH:MM 形式に変換
-    if (preg_match('/^(\d{1,2}):(\d{2})$/', $time, $matches)) {
-        return sprintf('%02d:%02d', intval($matches[1]), intval($matches[2]));
-    }
-    return $time;
-}
-
 // POSTデータから施設データを取得・サニタイズする関数
 function extractFacilityDataFromPost() {
     return [
@@ -38,15 +26,18 @@ function extractFacilityDataFromPost() {
 function validateFacilityData($data, $config) {
     $errors = [];
     
+    // 必須項目チェック
+    if (empty($data['name']) || !$data['lat'] || !$data['lng'] || empty($data['category'])) {
+        $errors[] = "必要な項目が入力されていません";
+    }
     
     // 文字数チェック
     if (mb_strlen($data['review']) > 2000) {
         $errors[] = "{$config['app']['field_labels']['review']}は2000文字以内で入力してください";
-        return $errors;
     }
-
-    if (empty($data['name']) || !$data['lat'] || !$data['lng'] || empty($data['category'])) {
-        $errors[] = "必要な項目が入力されていません";
+    
+    if (mb_strlen($data['description']) > 500) {
+        $errors[] = "{$config['app']['field_labels']['description']}は500文字以内で入力してください";
     }
     
     return $errors;
@@ -85,12 +76,12 @@ function saveFacilityData($db, $data, $config, $facilityId = null) {
     $db->exec('PRAGMA journal_mode = WAL;'); // WALモードでロック問題を軽減
     
     if ($facilityId) {
-        // 更新（csv_noは更新しない - 元のコードと同じ動作）
-        $sql = 'UPDATE facilities SET name = :name, name_kana = :name_kana, lat = :lat, lng = :lng, address = :address, address_detail = :address_detail, installation_position = :installation_position, phone = :phone, phone_extension = :phone_extension, corporate_number = :corporate_number, organization_name = :organization_name, available_days = :available_days, start_time = :start_time, end_time = :end_time, available_hours_note = :available_hours_note, pediatric_support = :pediatric_support, website = :website, note = :note, category = :category, updated_at = :updated_at WHERE id = :id';
+        // 更新
+        $sql = 'UPDATE facilities SET name = :name, lat = :lat, lng = :lng, address = :address, description = :description, phone = :phone, website = :website, business_hours = :business_hours, sns_account = :sns_account, category = :category, review = :review, updated_at = :updated_at WHERE id = :id';
         $stmt = $db->prepare($sql);
     } else {
-        // 新規作成（csv_noは空で作成）
-        $sql = 'INSERT INTO facilities (name, name_kana, lat, lng, address, address_detail, installation_position, phone, phone_extension, corporate_number, organization_name, available_days, start_time, end_time, available_hours_note, pediatric_support, website, note, category, updated_at) VALUES (:name, :name_kana, :lat, :lng, :address, :address_detail, :installation_position, :phone, :phone_extension, :corporate_number, :organization_name, :available_days, :start_time, :end_time, :available_hours_note, :pediatric_support, :website, :note, :category, :updated_at)';
+        // 新規作成
+        $sql = 'INSERT INTO facilities (name, lat, lng, address, description, phone, website, business_hours, sns_account, category, review, updated_at) VALUES (:name, :lat, :lng, :address, :description, :phone, :website, :business_hours, :sns_account, :category, :review, :updated_at)';
         $stmt = $db->prepare($sql);
     }
     
@@ -103,24 +94,16 @@ function saveFacilityData($db, $data, $config, $facilityId = null) {
     
     // データバインディング
     $stmt->bindValue(':name', $data['name'], SQLITE3_TEXT);
-    $stmt->bindValue(':name_kana', $data['name_kana'], SQLITE3_TEXT);
     $stmt->bindValue(':lat', $data['lat'], SQLITE3_FLOAT);
     $stmt->bindValue(':lng', $data['lng'], SQLITE3_FLOAT);
     $stmt->bindValue(':address', $data['address'], SQLITE3_TEXT);
-    $stmt->bindValue(':address_detail', $data['address_detail'], SQLITE3_TEXT);
-    $stmt->bindValue(':installation_position', $data['installation_position'], SQLITE3_TEXT);
+    $stmt->bindValue(':description', $data['description'], SQLITE3_TEXT);
     $stmt->bindValue(':phone', $data['phone'], SQLITE3_TEXT);
-    $stmt->bindValue(':phone_extension', $data['phone_extension'], SQLITE3_TEXT);
-    $stmt->bindValue(':corporate_number', $data['corporate_number'], SQLITE3_TEXT);
-    $stmt->bindValue(':organization_name', $data['organization_name'], SQLITE3_TEXT);
-    $stmt->bindValue(':available_days', $data['available_days'], SQLITE3_TEXT);
-    $stmt->bindValue(':start_time', $data['start_time'], SQLITE3_TEXT);
-    $stmt->bindValue(':end_time', $data['end_time'], SQLITE3_TEXT);
-    $stmt->bindValue(':available_hours_note', $data['available_hours_note'], SQLITE3_TEXT);
-    $stmt->bindValue(':pediatric_support', $data['pediatric_support'], SQLITE3_TEXT);
     $stmt->bindValue(':website', $data['website'], SQLITE3_TEXT);
-    $stmt->bindValue(':note', $data['note'], SQLITE3_TEXT);
+    $stmt->bindValue(':business_hours', $data['business_hours'], SQLITE3_TEXT);
+    $stmt->bindValue(':sns_account', $data['sns_account'], SQLITE3_TEXT);
     $stmt->bindValue(':category', $data['category'], SQLITE3_TEXT);
+    $stmt->bindValue(':review', $data['review'], SQLITE3_TEXT);
     $stmt->bindValue(':updated_at', $japanTime, SQLITE3_TEXT);
     
     if ($facilityId) {
@@ -128,7 +111,6 @@ function saveFacilityData($db, $data, $config, $facilityId = null) {
     }
     
     $result = $stmt->execute();
-    
     
     if ($result) {
         if ($facilityId) {
@@ -322,7 +304,6 @@ function processFacilityForm($facilityId = null) {
     }
     
     // 画像処理
-    $imageKey = $facilityId ? 'new_images' : 'images';
     $imageResult = processFacilityImages($db, $savedFacilityId, $config, $facilityId ? true : false);
     if (!$imageResult['success']) {
         return [

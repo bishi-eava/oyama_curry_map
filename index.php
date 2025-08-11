@@ -36,8 +36,8 @@ $appName = $config['app']['name'];
                     現在位置に移動:自位置を中心に地図表示<br>
                     ■ 免責事項<br>
                     掲載情報は参考です<br>最新の営業状況は各店舗にご確認ください<br><br>
-                    <span style="font-size: 1.0em; color: #666;">GitHub : <a href="https://github.com/code4oyama/oyama_curry_map">oyama_curry_map</a></span><br>
-                    <span style="font-size: 1.0em; color: #666;">©2025 <a href="https://code4oyama.org">Code for OYAMA</a></span><br>
+                    <span style="font-size: 1.0em; color: #666;">GitHub : <a href="https://github.com/bishi-eava/oyama_curry_map/">oyama_curry_map</a></span><br>
+                    <span style="font-size: 1.0em; color: #666;">©2025 <a href="https://github.com/bishi-eava/">bishi-eava</a></span><br>
                 </div>
             </div>
         </div>

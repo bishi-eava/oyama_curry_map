@@ -575,26 +575,75 @@ function createTableIndexes($config, $tableName, $db) {
     }
 }
 
-// テーブル削除用ヘルパー関数
+// データベース安全クリーンアップ関数
+function safeDatabaseCleanup($db) {
+    try {
+        // WALモードのチェックポイント実行
+        $db->exec('PRAGMA wal_checkpoint(TRUNCATE);');
+        // 接続をクリーンアップ
+        $db->exec('PRAGMA optimize;');
+    } catch (Exception $e) {
+        error_log("Database cleanup warning: " . $e->getMessage());
+    }
+}
+
+// テーブル削除用ヘルパー関数（改良版）
 function dropAllTables($config, $db) {
-    // 設定ファイルから削除順序を取得
-    $dropOrder = $config['database']['drop_order'] ?? array_keys($config['database']['tables']);
-    
-    foreach ($dropOrder as $tableName) {
-        try {
-            $db->exec("DROP TABLE IF EXISTS {$tableName}");
-        } catch (Exception $e) {
-            error_log("Failed to drop table {$tableName}: " . $e->getMessage());
+    try {
+        // 外部キー制約を一時的に無効化
+        $db->exec('PRAGMA foreign_keys = OFF;');
+        
+        // 設定ファイルから削除順序を取得
+        $dropOrder = $config['database']['drop_order'] ?? array_keys($config['database']['tables']);
+        
+        // トランザクション開始
+        $db->exec('BEGIN TRANSACTION;');
+        
+        foreach ($dropOrder as $tableName) {
+            try {
+                $result = $db->exec("DROP TABLE IF EXISTS {$tableName}");
+                if ($result === false) {
+                    throw new Exception("Failed to drop table {$tableName}: " . $db->lastErrorMsg());
+                }
+            } catch (Exception $e) {
+                error_log("Error dropping table {$tableName}: " . $e->getMessage());
+                // 個別のテーブル削除失敗時はロールバックして再試行
+                $db->exec('ROLLBACK;');
+                $db->exec('BEGIN TRANSACTION;');
+                // 強制削除を試行
+                $db->exec("DROP TABLE IF EXISTS {$tableName}");
+            }
         }
+        
+        // トランザクションコミット
+        $db->exec('COMMIT;');
+        
+        // 外部キー制約を再有効化
+        $db->exec('PRAGMA foreign_keys = ON;');
+        
+    } catch (Exception $e) {
+        // 全体の処理が失敗した場合はロールバック
+        try {
+            $db->exec('ROLLBACK;');
+            $db->exec('PRAGMA foreign_keys = ON;');
+        } catch (Exception $rollbackError) {
+            error_log("Rollback failed: " . $rollbackError->getMessage());
+        }
+        throw $e;
     }
 }
 
 // 構成のみ更新関数（データ保持）
 function updateDatabaseSchema($config) {
-    // 設定ファイルの検証
-    validateFullConfig($config);
-    
-    $db = getDatabase();
+    $db = null;
+    try {
+        // 設定ファイルの検証
+        validateFullConfig($config);
+        
+        $db = getDatabase();
+        
+        // データベースの初期設定
+        $db->busyTimeout(60000); // 60秒のタイムアウト
     
     // 設定からテーブル構造を取得してテーブル作成
     $facilitiesTableSQL = getTableSchema($config, 'facilities');
@@ -658,73 +707,142 @@ function updateDatabaseSchema($config) {
         $tableInfo[] = $row['name'] . ' (' . $row['type'] . ')';
     }
     
-    $db->close();
-    
-    // テーブル構造をセッションに保存（完了画面で表示するため）
-    $_SESSION['table_structure'] = $tableInfo;
-    
-    return true;
+        // データベースクリーンアップ
+        safeDatabaseCleanup($db);
+        $db->close();
+        
+        // テーブル構造をセッションに保存（完了画面で表示するため）
+        $_SESSION['table_structure'] = $tableInfo;
+        
+        return true;
+        
+    } catch (Exception $e) {
+        error_log("updateDatabaseSchema Error: " . $e->getMessage());
+        if ($db) {
+            try {
+                safeDatabaseCleanup($db);
+                $db->close();
+            } catch (Exception $cleanupError) {
+                error_log("Database cleanup error: " . $cleanupError->getMessage());
+            }
+        }
+        return false;
+    }
 }
 
 // 全削除初期化関数（サンプルデータのみ）
 function resetDatabaseWithSampleData($config) {
-    // 設定ファイルの検証
-    validateFullConfig($config);
-    
-    $db = getDatabase();
-    
-    // テーブルを削除（設定ファイルベース）
-    dropAllTables($config, $db);
-    
-    // 既存の画像ファイルも削除
-    $imageDir = __DIR__ . '/' . $config['storage']['images_dir'] . '/';
-    if (is_dir($imageDir)) {
-        $files = glob($imageDir . '*');
-        foreach ($files as $file) {
-            if (is_file($file)) {
-                unlink($file);
+    $db = null;
+    try {
+        // 設定ファイルの検証
+        validateFullConfig($config);
+        
+        $db = getDatabase();
+        
+        // データベースの初期設定
+        $db->busyTimeout(60000); // 60秒のタイムアウト
+        
+        // テーブルを削除（設定ファイルベース）
+        dropAllTables($config, $db);
+        
+        // 既存の画像ファイルも削除（安全な方法）
+        $imageDir = __DIR__ . '/' . $config['storage']['images_dir'] . '/';
+        if (is_dir($imageDir) && is_readable($imageDir)) {
+            try {
+                $files = glob($imageDir . '*');
+                if ($files !== false) {
+                    foreach ($files as $file) {
+                        if (is_file($file) && is_writable($file)) {
+                            if (!unlink($file)) {
+                                error_log("Warning: Could not delete file: " . $file);
+                            }
+                        }
+                    }
+                }
+            } catch (Exception $e) {
+                error_log("Error during image file cleanup: " . $e->getMessage());
+                // ファイル削除エラーは処理を継続（致命的ではない）
             }
         }
+        
+        // トランザクション開始
+        $db->exec('BEGIN TRANSACTION;');
+        
+        try {
+            // テーブル再作成（設定ファイルから）
+            $tables = array_keys($config['database']['tables']);
+            foreach ($tables as $tableName) {
+                $tableSQL = getTableSchema($config, $tableName);
+                $result = $db->exec($tableSQL);
+                if ($result === false) {
+                    throw new Exception("Failed to create table {$tableName}: " . $db->lastErrorMsg());
+                }
+                
+                // インデックスも作成
+                createTableIndexes($config, $tableName, $db);
+            }
+            
+            // サンプルデータ（設定ファイルから取得）
+            $facilities = $config['sample_data'];
+            
+            // 動的SQL生成
+            $insertSQL = generateInsertSQL($config, 'facilities');
+            
+            // 日本時間を取得（タイムゾーン設定）
+            date_default_timezone_set($config['app']['timezone']);
+            $japanTime = date('Y-m-d H:i:s', time());
+            
+            foreach ($facilities as $facility) {
+                $stmt = $db->prepare($insertSQL);
+                if (!$stmt) {
+                    throw new Exception("Failed to prepare insert statement: " . $db->lastErrorMsg());
+                }
+                
+                // 日本時間のupdated_atを追加
+                $facility['updated_at'] = $japanTime;
+                
+                // 動的データバインディング
+                bindDataFromConfig($stmt, $facility, $config, 'facilities');
+                
+                $result = $stmt->execute();
+                if (!$result) {
+                    throw new Exception("Failed to insert sample data: " . $db->lastErrorMsg());
+                }
+            }
+            
+            // トランザクションコミット
+            $db->exec('COMMIT;');
+            
+        } catch (Exception $e) {
+            // エラー時はロールバック
+            $db->exec('ROLLBACK;');
+            throw $e;
+        }
+        
+        // データベースクリーンアップ
+        safeDatabaseCleanup($db);
+        $db->close();
+        return true;
+        
+    } catch (Exception $e) {
+        error_log("resetDatabaseWithSampleData Error: " . $e->getMessage());
+        if ($db) {
+            try {
+                safeDatabaseCleanup($db);
+                $db->close();
+            } catch (Exception $cleanupError) {
+                error_log("Database cleanup error: " . $cleanupError->getMessage());
+            }
+        }
+        return false;
     }
-    
-    // テーブル再作成（設定ファイルから）
-    $tables = array_keys($config['database']['tables']);
-    foreach ($tables as $tableName) {
-        $tableSQL = getTableSchema($config, $tableName);
-        $db->exec($tableSQL);
-        
-        // インデックスも作成
-        createTableIndexes($config, $tableName, $db);
-    }
-    
-    // サンプルデータ（設定ファイルから取得）
-    $facilities = $config['sample_data'];
-    
-    // 動的SQL生成
-    $insertSQL = generateInsertSQL($config, 'facilities');
-    
-    // 日本時間を取得（タイムゾーン設定）
-    date_default_timezone_set($config['app']['timezone']);
-    $japanTime = date('Y-m-d H:i:s', time());
-    
-    foreach ($facilities as $facility) {
-        $stmt = $db->prepare($insertSQL);
-        
-        // 日本時間のupdated_atを追加
-        $facility['updated_at'] = $japanTime;
-        
-        // 動的データバインディング
-        bindDataFromConfig($stmt, $facility, $config, 'facilities');
-        
-        $stmt->execute();
-    }
-    
-    $db->close();
-    return true;
 }
 
 // 全削除初期化関数（CSVインポート）
 function resetDatabaseWithCSVData($config) {
+    $db = null;
+    $csvFilePath = null;
+    
     try {
         // 設定ファイルの検証
         validateFullConfig($config);
@@ -732,63 +850,91 @@ function resetDatabaseWithCSVData($config) {
         // アップロードされたCSVファイルの検証
         $csvFilePath = validateUploadedCSVFile($config);
         
-    } catch (Exception $e) {
-        error_log("CSV Import Error: " . $e->getMessage());
-        return false;
-    }
-    
-    $db = getDatabase();
-    
-    // テーブルを削除（設定ファイルベース）
-    dropAllTables($config, $db);
-    
-    // 既存の画像ファイルも削除
-    $imageDir = __DIR__ . '/' . $config['storage']['images_dir'] . '/';
-    if (is_dir($imageDir)) {
-        $files = glob($imageDir . '*');
-        foreach ($files as $file) {
-            if (is_file($file)) {
-                unlink($file);
+        // データベース接続
+        $db = getDatabase();
+        
+        // WAL モード確認・設定
+        try {
+            $walModeResult = $db->query('PRAGMA journal_mode;');
+            if ($walModeResult) {
+                $walModeRow = $walModeResult->fetchArray(SQLITE3_ASSOC);
+                if ($walModeRow['journal_mode'] !== 'wal') {
+                    $db->exec('PRAGMA journal_mode=WAL;');
+                }
+                $walModeResult->finalize();
+            }
+        } catch (Exception $e) {
+            error_log("WAL mode setup error (non-critical): " . $e->getMessage());
+        }
+
+        // 全テーブル削除処理
+        dropAllTables($config, $db);
+        
+        // 画像ファイル削除
+        $imagesDir = $config['storage']['images_dir'];
+        if (is_dir($imagesDir)) {
+            try {
+                $files = glob($imagesDir . '/*');
+                if ($files !== false) {
+                    foreach ($files as $file) {
+                        if (is_file($file) && preg_match('/\.(jpg|jpeg|png|gif)$/i', $file)) {
+                            unlink($file);
+                        }
+                    }
+                }
+            } catch (Exception $e) {
+                error_log("Error during image file cleanup: " . $e->getMessage());
             }
         }
-    }
-    
-    // テーブル再作成（設定ファイルから）
-    $tables = array_keys($config['database']['tables']);
-    foreach ($tables as $tableName) {
-        $tableSQL = getTableSchema($config, $tableName);
-        $db->exec($tableSQL);
         
-        // インデックスも作成
-        createTableIndexes($config, $tableName, $db);
-    }
-    
-    // CSVファイルの読み込みとデータインポート
-    $csvData = [];
-    $categoryCount = [];
-    $lineNumber = 0;
-    $importedCount = 0;
-    
-    // 動的SQL生成
-    $insertSQL = generateInsertSQL($config, 'facilities');
-    
-    // 日本時間を取得（タイムゾーン設定）
-    date_default_timezone_set($config['app']['timezone']);
-    $japanTime = date('Y-m-d H:i:s', time());
-    
-    // 設定ファイルから検証パラメータを取得
-    $expectedColumns = $config['csv_import']['validation']['expected_columns'];
-    $latMin = $config['csv_import']['validation']['lat_min'];
-    $latMax = $config['csv_import']['validation']['lat_max'];
-    $lngMin = $config['csv_import']['validation']['lng_min'];
-    $lngMax = $config['csv_import']['validation']['lng_max'];
-    $requiredFields = $config['csv_import']['required_fields'];
-    
-    // CSVファイルを開く
-    if (($handle = fopen($csvFilePath, "r")) !== FALSE) {
+        // トランザクション開始
+        $db->exec('BEGIN TRANSACTION;');
+        
+        // テーブル再作成
+        $tables = array_keys($config['database']['tables']);
+        foreach ($tables as $tableName) {
+            $tableSQL = getTableSchema($config, $tableName);
+            $result = $db->exec($tableSQL);
+            if ($result === false) {
+                throw new Exception("Failed to create table {$tableName}: " . $db->lastErrorMsg());
+            }
+            
+            // インデックス作成
+            createTableIndexes($config, $tableName, $db);
+        }
+        
+        // CSVデータインポート
+        $importedCount = 0;
+        $categoryCount = [];
+        $lineNumber = 0;
+        
+        // 動的SQL生成
+        $insertSQL = generateInsertSQL($config, 'facilities');
+        
+        // 日本時間を取得（タイムゾーン設定）
+        date_default_timezone_set($config['app']['timezone']);
+        $japanTime = date('Y-m-d H:i:s', time());
+        
+        // 設定ファイルから検証パラメータを取得
+        $expectedColumns = $config['csv_import']['validation']['expected_columns'];
+        $latMin = $config['csv_import']['validation']['lat_min'];
+        $latMax = $config['csv_import']['validation']['lat_max'];
+        $lngMin = $config['csv_import']['validation']['lng_min'];
+        $lngMax = $config['csv_import']['validation']['lng_max'];
+        $requiredFields = $config['csv_import']['required_fields'];
+        
+        // CSVファイルを開く
+        $handle = fopen($csvFilePath, "r");
+        if ($handle === FALSE) {
+            throw new Exception("Cannot open CSV file: " . $csvFilePath);
+        }
+        
         // 最初の行（ヘッダー）をスキップ（設定により）
-        if ($config['csv_import']['has_header'] && ($header = fgetcsv($handle, 1000, ",", '"', "\\")) !== FALSE) {
-            $lineNumber++;
+        if ($config['csv_import']['has_header']) {
+            $header = fgetcsv($handle, 1000, ",", '"', "\\");
+            if ($header !== FALSE) {
+                $lineNumber++;
+            }
         }
         
         // データ行を読み込み
@@ -797,18 +943,27 @@ function resetDatabaseWithCSVData($config) {
             
             // データ列数の検証（設定ベース）
             if (count($data) < $expectedColumns) {
-                error_log("CSV Import Warning: Insufficient data columns at line " . $lineNumber . " (expected {$expectedColumns}, got " . count($data) . ")");
+                error_log("CSV Import Warning: Insufficient columns at line " . $lineNumber . " - got " . count($data) . ", expected " . $expectedColumns);
                 continue;
             }
             
-            // CSVデータのマッピング（設定ベース）
-            $mappedData = mapCSVDataToFields($data, $config);
+            // データマッピング（設定ファイルベース）
+            $mappedData = [];
+            foreach ($config['csv_import']['field_mapping'] as $fieldName => $columnIndex) {
+                $mappedData[$fieldName] = isset($data[$columnIndex]) ? trim($data[$columnIndex]) : '';
+            }
+            
+            // デフォルト値適用
+            foreach ($config['csv_import']['default_values'] as $field => $defaultValue) {
+                if (empty($mappedData[$field])) {
+                    $mappedData[$field] = $defaultValue;
+                }
+            }
             
             // 必須フィールドの検証（設定ベース）
             $hasRequiredData = true;
             foreach ($requiredFields as $field) {
-                if (empty($mappedData[$field]) || ($field === 'lat' && floatval($mappedData[$field]) == 0) || 
-                    ($field === 'lng' && floatval($mappedData[$field]) == 0)) {
+                if (empty($mappedData[$field])) {
                     $hasRequiredData = false;
                     break;
                 }
@@ -827,8 +982,6 @@ function resetDatabaseWithCSVData($config) {
                 continue;
             }
             
-            // categoryフィールドはCSVから直接取得（自動分類なし）
-            
             // 日本時間のupdated_atを追加
             $mappedData['updated_at'] = $japanTime;
             
@@ -841,33 +994,52 @@ function resetDatabaseWithCSVData($config) {
             
             // データベースに挿入（動的バインディング）
             $stmt = $db->prepare($insertSQL);
+            if (!$stmt) {
+                throw new Exception("Failed to prepare insert statement: " . $db->lastErrorMsg());
+            }
+            
             bindDataFromConfig($stmt, $mappedData, $config, 'facilities');
             
-            if ($stmt->execute()) {
-                $importedCount++;
-            } else {
+            $result = $stmt->execute();
+            if (!$result) {
                 error_log("Failed to insert facility: " . $mappedData['name'] . " (Line: " . $lineNumber . ") - " . $db->lastErrorMsg());
+            } else {
+                $importedCount++;
             }
         }
         
         fclose($handle);
-    } else {
-        error_log("Cannot open CSV file: " . $csvFilePath);
+        
+        // トランザクションコミット
+        $db->exec('COMMIT;');
+        
+        // データベースクリーンアップ
+        safeDatabaseCleanup($db);
         $db->close();
+        
+        // インポート結果をセッションに保存
+        $_SESSION['csv_import_results'] = $categoryCount;
+        
+        // 結果チェック
+        if ($importedCount < 1) {
+            error_log("CSV Import Error: No valid data imported");
+            return false;
+        }
+        
+        return true;
+        
+    } catch (Exception $e) {
+        error_log("resetDatabaseWithCSVData Error: " . $e->getMessage());
+        if ($db) {
+            try {
+                $db->exec('ROLLBACK;');
+                safeDatabaseCleanup($db);
+                $db->close();
+            } catch (Exception $cleanupError) {
+                error_log("Database cleanup error: " . $cleanupError->getMessage());
+            }
+        }
         return false;
     }
-    
-    $db->close();
-    
-    // インポート結果をセッションに保存
-    $_SESSION['csv_import_results'] = $categoryCount;
-    
-    // 最低限のデータがインポートされたかチェック
-    if ($importedCount < 1) {
-        error_log("CSV Import Error: No valid data imported");
-        return false;
-    }
-    
-    return true;
 }
 

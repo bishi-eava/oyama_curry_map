@@ -21,7 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 if (isset($_POST['export']) || isset($_GET['export'])) {
     try {
         // ファイル名生成（日時付き）
-        $filename = 'facilities_' . date('Ymd_His') . '.csv';
+        $filename = 'oyama_curry_map_' . date('Ymd_His') . '.csv';
         
         // HTTPヘッダー設定
         header('Content-Type: text/csv; charset=UTF-8');
@@ -38,67 +38,46 @@ if (isset($_POST['export']) || isset($_GET['export'])) {
         // CSV出力を開始
         $output = fopen('php://output', 'w');
         
-        // CSVヘッダー行を出力（元のCSVファイルと同じ構成）
+        // CSVヘッダー行を出力（カレーマップ用の構成）
         $header = [
-            '都道府県コード又は市区町村コード',
-            'NO',
-            '都道府県名',
-            '市区町村名',
-            '名称',
-            '名称_カナ',
-            '住所',
-            '方書',
-            '緯度',
+            '店舗名',
+            '緯度', 
             '経度',
-            'アクセス方法',
+            '住所',
+            '説明',
             '電話番号',
-            '内線番号',
-            '法人番号',
-            '団体名',
-            '利用可能曜日',
-            '開始時間',
-            '終了時間',
-            '利用可能日時特記事項',
-            '小児対応設備の有無',
-            'URL',
-            '備考'
+            'ウェブサイト',
+            '営業時間',
+            'SNSアカウント',
+            'カテゴリ',
+            'レビュー・詳細'
         ];
         
         fputcsv($output, $header);
         
-        // facilitiesテーブルからデータを取得
-        $query = "SELECT * FROM facilities ORDER BY updated_at DESC";
+        // facilitiesテーブルからカレー店用フィールドのみ取得
+        $query = "SELECT name, lat, lng, address, description, phone, website, business_hours, sns_account, category, review FROM facilities ORDER BY updated_at DESC";
         $result = $db->query($query);
         
         if (!$result) {
             throw new Exception('Database query failed: ' . $db->lastErrorMsg());
         }
         
-        // データ行を出力
+        // データ行を出力（カレーマップ用のフィールド構成）
         while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+            // config.phpのfield_mappingの順序に完全一致
             $csvRow = [
-                '092088', // 都道府県コード（小山市固定）
-                !empty($row['csv_no']) ? $row['csv_no'] : '', // NO
-                '栃木県', // 都道府県名（固定）
-                '小山市', // 市区町村名（固定）
-                !empty($row['name']) ? $row['name'] : '', // 名称
-                !empty($row['name_kana']) ? $row['name_kana'] : '', // 名称_カナ
-                !empty($row['address']) ? $row['address'] : '', // 住所
-                !empty($row['address_detail']) ? $row['address_detail'] : '', // 方書
-                !empty($row['lat']) ? $row['lat'] : '', // 緯度
-                !empty($row['lng']) ? $row['lng'] : '', // 経度
-                !empty($row['installation_position']) ? $row['installation_position'] : '', // アクセス方法
-                !empty($row['phone']) ? $row['phone'] : '', // 電話番号
-                !empty($row['phone_extension']) ? $row['phone_extension'] : '', // 内線番号
-                !empty($row['corporate_number']) ? $row['corporate_number'] : '', // 法人番号
-                !empty($row['organization_name']) ? $row['organization_name'] : '', // 団体名
-                !empty($row['available_days']) ? $row['available_days'] : '', // 利用可能曜日
-                !empty($row['start_time']) ? $row['start_time'] : '', // 開始時間
-                !empty($row['end_time']) ? $row['end_time'] : '', // 終了時間
-                !empty($row['available_hours_note']) ? $row['available_hours_note'] : '', // 利用可能日時特記事項
-                !empty($row['pediatric_support']) ? $row['pediatric_support'] : '', // 小児対応設備の有無
-                !empty($row['website']) ? $row['website'] : '', // URL
-                !empty($row['note']) ? $row['note'] : '' // 備考
+                $row['name'] ?? '',          // 0: 店舗名
+                $row['lat'] ?? '',           // 1: 緯度
+                $row['lng'] ?? '',           // 2: 経度
+                $row['address'] ?? '',       // 3: 住所
+                $row['description'] ?? '',   // 4: 説明
+                $row['phone'] ?? '',         // 5: 電話番号
+                $row['website'] ?? '',       // 6: ウェブサイト
+                $row['business_hours'] ?? '', // 7: 営業時間
+                $row['sns_account'] ?? '',   // 8: SNSアカウント
+                $row['category'] ?? '',      // 9: カテゴリ
+                $row['review'] ?? ''         // 10: レビュー・詳細
             ];
             
             fputcsv($output, $csvRow);
@@ -152,16 +131,18 @@ if ($countResult) {
                 <li>データ件数: <strong><?= $count ?></strong> 件</li>
                 <li>ファイル形式: CSV（UTF-8）</li>
                 <li>ファイル名: facilities_YYYYMMDD_HHMMSS.csv</li>
-                <li>列数: 22列（元のオープンデータCSVと同じ構成）</li>
+                <li>列数: 11列（カレー店マップ用の構成）</li>
+                <li>出力項目: 店舗名、緯度、経度、住所、説明、電話番号、ウェブサイト、営業時間、SNSアカウント、カテゴリ、レビュー・詳細</li>
             </ul>
         </div>
         
         <div style="background: #fff3cd; padding: 15px; border-radius: 5px; margin-bottom: 20px; border: 1px solid #ffeaa7;">
             <h4>注意事項</h4>
             <ul>
-                <li>出力されるCSVファイルには、データベースに登録されている全ての施設情報が含まれます</li>
-                <li>個人情報や機密情報が含まれる場合は、取り扱いにご注意ください</li>
+                <li>出力されるCSVファイルには、データベースに登録されている全ての店舗情報が含まれます</li>
+                <li>このCSVファイルは、データベース初期化画面（init_db.php）でのCSVインポートに使用できます</li>
                 <li>出力後のファイルは適切に管理してください</li>
+                <li>CSVファイルの編集時は、列数と列順序を変更しないでください</li>
             </ul>
         </div>
         
