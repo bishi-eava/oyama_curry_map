@@ -41,6 +41,12 @@ $res = $db->query('SELECT * FROM facilities ORDER BY id DESC');
     <title><?= htmlspecialchars($config['app']['facility_name']) ?>管理</title>
     <link rel="stylesheet" href="css/common.css" />
     <link rel="stylesheet" href="css/admin.css" />
+    <link rel="icon" type="image/png" href="./favicon_admin/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="./favicon_admin/favicon.svg" />
+    <link rel="shortcut icon" href="./favicon_admin/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="./favicon_admin/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="おやまカレー管理" />
+    <link rel="manifest" href="/favicon_admin/site.webmanifest" />
 </head>
 <body>
     <div class="header">
